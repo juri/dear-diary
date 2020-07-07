@@ -82,29 +82,12 @@ fn file_path(dt: &DateTime<Utc>) -> PathBuf {
 }
 
 fn collect_dates(dir: &Path) -> FileRepoResult<Vec<DateTime<Utc>>> {
-    // collect_files returns a Result. So match on it and if it's Ok,
-    // then iterate the contained name, parse them, translate parse errors into
-    // FileRepoErrors and then with collect change the Vec of Results into
-    // a Result of Vec where an Err in one of the original Results renders the
-    // total Result into an Err.
-
     collect_files(dir).map(|names| {
         names
             .iter()
             .filter_map(|name| Utc.datetime_from_str(name, FILE_NAME_FORMAT).ok())
-            // .map(|name| Utc.datetime_from_str(name, FILE_NAME_FORMAT).map_err(|e| FileRepoError::NameParseError(String::from(name), e)))
-            .collect()  // ::<FileRepoResult<Vec<DateTime<Utc>>>>(),
+            .collect()
     })
-
-
-    // match collect_files(dir) {
-    //     Ok(names) => names
-    //         .iter()
-    //         .filter_map(|name| Utc.datetime_from_str(name, FILE_NAME_FORMAT).ok())
-    //         // .map(|name| Utc.datetime_from_str(name, FILE_NAME_FORMAT).map_err(|e| FileRepoError::NameParseError(String::from(name), e)))
-    //         .collect(),  // ::<FileRepoResult<Vec<DateTime<Utc>>>>(),
-    //     Err(e) => Err(e),
-    // }
 }
 
 fn collect_files(dir: &Path) -> FileRepoResult<Vec<String>> {
