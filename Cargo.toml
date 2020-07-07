@@ -1,0 +1,17 @@
+[package]
+name = "dear_diary"
+version = "0.1.0"
+authors = ["Juri Pakaste"]
+edition = "2018"
+
+[lib]
+name = "diary_core"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ddiary"
+path = "src/bin.rs"
+
+[dependencies]
+chrono = "0.4"
+futures = "0.3.5"
