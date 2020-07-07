@@ -45,15 +45,19 @@ pub enum FileRepoError {
 impl fmt::Display for FileRepoError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            FileRepoError::BadPathError(p) => write!(f, "Not a directory: {}", p.to_str().unwrap_or("(no path)")),
-            FileRepoError::IoError(e) => { 
+            FileRepoError::BadPathError(p) => {
+                write!(f, "Not a directory: {}", p.to_str().unwrap_or("(no path)"))
+            }
+            FileRepoError::IoError(e) => {
                 write!(f, "IO Error: ")?;
                 e.fmt(f)
-            },
-            FileRepoError::NameParseError(name, e) => 
-                write!(f, "Date parse error with name {}: {}", name, e),
-            FileRepoError::EntryContentDecodingError(e) =>
-                write!(f, "Error decoding diary entry content: {}", e),
+            }
+            FileRepoError::NameParseError(name, e) => {
+                write!(f, "Date parse error with name {}: {}", name, e)
+            }
+            FileRepoError::EntryContentDecodingError(e) => {
+                write!(f, "Error decoding diary entry content: {}", e)
+            }
         }
     }
 }
@@ -69,7 +73,7 @@ fn get_text(dir: &Path, dt: &DateTime<Utc>) -> FileRepoResult<String> {
     let data = fs::read(dir.join(path))?;
     match String::from_utf8(data) {
         Ok(s) => FileRepoResult::Ok(s),
-        Err(e) => FileRepoResult::Err(FileRepoError::EntryContentDecodingError(e))
+        Err(e) => FileRepoResult::Err(FileRepoError::EntryContentDecodingError(e)),
     }
 }
 
@@ -95,15 +99,19 @@ fn collect_files(dir: &Path) -> FileRepoResult<Vec<String>> {
     let visitor = &mut |fp: &Path| -> () {
         let parent1 = match fp.parent() {
             Some(p) => p,
-            None => return
+            None => return,
         };
         let parent1_name = match parent1.file_name().and_then(|s| s.to_str()) {
             Some(p) => p,
-            None => return
+            None => return,
         };
-        let parent2_name = match parent1.parent().and_then(|p| p.file_name()).and_then(|s| s.to_str()) {
+        let parent2_name = match parent1
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|s| s.to_str())
+        {
             Some(p) => p,
-            None => return
+            None => return,
         };
         // let fpstr = match fp.to_str() {
         //     Some(p) => p,
@@ -111,7 +119,7 @@ fn collect_files(dir: &Path) -> FileRepoResult<Vec<String>> {
         // };
         let file_name = match fp.file_name().and_then(|s| s.to_str()) {
             Some(p) => p,
-            None => return
+            None => return,
         };
         // if parent2_name == file_name.chars().take(4).collect() && parent1_name == file_name.chars().skip(4).take(2).collect() {
         let file_start1: String = file_name.chars().take(4).collect();
