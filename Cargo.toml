@@ -14,4 +14,3 @@ path = "src/bin.rs"
 
 [dependencies]
 chrono = "0.4"
-futures = "0.3.5"
