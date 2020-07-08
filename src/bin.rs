@@ -1,7 +1,7 @@
 extern crate clap;
 
-use clap::{Arg, App, SubCommand};
 
+use clap::{App, Arg};
 use diary_core::{self, Diary, DiaryEntryKey};
 
 use std::process;
