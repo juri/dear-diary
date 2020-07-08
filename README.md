@@ -1,5 +1,7 @@
 # Dear Diary: A simple CLI diary app
 
+Extremely work in progress.
+
 ## License
 
 Licensed under either of
