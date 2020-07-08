@@ -16,9 +16,13 @@ pub type FileRepoResult<T> = Result<T, FileRepoError>;
 
 impl Tree {
     pub fn new(root: &Path) -> FileRepoResult<Tree> {
-        if !root.is_dir() {
+        let root_exists = root.exists();
+        if root_exists && !root.is_dir() {
             FileRepoResult::Err(FileRepoError::BadPathError(root.to_path_buf()))
         } else {
+            if !root_exists {
+                fs::create_dir_all(root)?;
+            }
             FileRepoResult::Ok(Tree {
                 root: root.to_path_buf(),
             })
