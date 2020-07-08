@@ -40,6 +40,12 @@ pub struct DiaryEntryKey {
 }
 
 impl Diary {
+    pub fn open(path: &Path) -> Result<Diary, DiaryError> {
+        let tree = filerepo::tree::Tree::new(&path)?;
+        let diary = Diary { tree };
+        Ok(diary)
+    }
+    
     pub fn list_dates(&self) -> DiaryResult<Vec<DiaryEntryKey>> {
         self.tree
             .list() // list_dates()
@@ -50,11 +56,4 @@ impl Diary {
     pub fn get_text_for_entry(&self, key: &DiaryEntryKey) -> DiaryResult<String> {
         self.tree.get_text(&key.date).map_err(DiaryError::from)
     }
-}
-
-pub fn open(path_name: &str) -> Result<Diary, DiaryError> {
-    let path = Path::new(path_name);    
-    let tree = filerepo::tree::Tree::new(&path)?;
-    let diary = Diary { tree };
-    Ok(diary)
 }
