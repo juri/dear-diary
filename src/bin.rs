@@ -4,7 +4,7 @@ mod diarydir;
 
 use clap::{App, Arg};
 use diary_core::{self, Diary, DiaryEntryKey};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process;
 
 pub fn main() {
@@ -38,8 +38,7 @@ pub fn main() {
             process::exit(1)
         });
     path.push(matches.value_of("name").unwrap_or("default"));
-    println!("path: {:?}", path);
-    let diary = CLIDiary::open();
+    let diary = CLIDiary::open(&path);
     diary.list_dates().first().map(|d| diary.show_entry(d));
 }
 
@@ -48,8 +47,8 @@ struct CLIDiary {
 }
 
 impl CLIDiary {
-    fn open() -> CLIDiary {
-        match diary_core::open("/tmp/diarytest") {
+    fn open(path: &Path) -> CLIDiary {
+        match diary_core::open(path) {
             Ok(diary) => CLIDiary { diary },
             Err(err) => {
                 eprintln!("Error opening diary: {}", err);

@@ -52,8 +52,7 @@ impl Diary {
     }
 }
 
-pub fn open(path_name: &str) -> Result<Diary, DiaryError> {
-    let path = Path::new(path_name);    
+pub fn open(path: &Path) -> Result<Diary, DiaryError> {
     let tree = filerepo::tree::Tree::new(&path)?;
     let diary = Diary { tree };
     Ok(diary)
