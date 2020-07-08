@@ -1,8 +1,24 @@
+extern crate clap;
+
+use clap::{Arg, App, SubCommand};
+
 use diary_core::{self, Diary, DiaryEntryKey};
 
 use std::process;
 
 pub fn main() {
+    let matches = App::new("ddiary")
+        .version("0.1.0")
+        .author("Juri Pakaste <juri@juripakaste.fi>")
+        .about("Manages diaries")
+        .arg(Arg::with_name("path")
+            .short("p")
+            .long("path")
+            .value_name("PATH")
+            .help("Location of the diary directory")
+            .takes_value(true))
+        .get_matches();
+
     let diary = CLIDiary::open();
     diary.list_dates().first().map(|d| diary.show_entry(d));
 }
