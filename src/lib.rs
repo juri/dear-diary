@@ -14,7 +14,7 @@ pub struct Diary {
 
 #[derive(Debug)]
 pub enum DiaryError {
-    FileRepoError(filerepo::tree::FileRepoError)
+    FileRepoError(filerepo::tree::FileRepoError),
 }
 
 impl From<filerepo::tree::FileRepoError> for DiaryError {
@@ -26,7 +26,7 @@ impl From<filerepo::tree::FileRepoError> for DiaryError {
 impl fmt::Display for DiaryError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            DiaryError::FileRepoError(e) => write!(f, "File repository error: {}", e)
+            DiaryError::FileRepoError(e) => write!(f, "File repository error: {}", e),
         }
     }
 }
@@ -45,7 +45,7 @@ impl Diary {
         let diary = Diary { tree };
         Ok(diary)
     }
-    
+
     pub fn list_dates(&self) -> DiaryResult<Vec<DiaryEntryKey>> {
         self.tree
             .list() // list_dates()
