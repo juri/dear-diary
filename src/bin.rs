@@ -3,7 +3,6 @@ extern crate clap;
 
 use clap::{App, Arg};
 use diary_core::{self, Diary, DiaryEntryKey};
-
 use std::process;
 
 pub fn main() {
@@ -58,5 +57,3 @@ impl CLIDiary {
         }
     }
 }
-
-
