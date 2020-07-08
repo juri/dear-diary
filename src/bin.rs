@@ -3,7 +3,7 @@ extern crate clap;
 mod diarydir;
 
 use clap::{App, Arg};
-use diary_core::{self, Diary, DiaryEntryKey};
+use diary_core::{Diary, DiaryEntryKey};
 use std::path::{Path, PathBuf};
 use std::process;
 
@@ -48,7 +48,7 @@ struct CLIDiary {
 
 impl CLIDiary {
     fn open(path: &Path) -> CLIDiary {
-        match diary_core::open(path) {
+        match Diary::open(path) {
             Ok(diary) => CLIDiary { diary },
             Err(err) => {
                 eprintln!("Error opening diary: {}", err);
