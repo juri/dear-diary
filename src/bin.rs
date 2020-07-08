@@ -44,7 +44,7 @@ pub fn main() {
 }
 
 struct CLIDiary {
-    diary: Diary
+    diary: Diary,
 }
 
 impl CLIDiary {
