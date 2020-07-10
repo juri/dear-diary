@@ -45,11 +45,11 @@ pub fn main() {
     diary.list_dates().first().map(|d| diary.show_entry(d));
 }
 
-struct CLIDiary {
-    diary: Diary,
+struct CLIDiary<'a> {
+    diary: Diary<'a>,
 }
 
-impl CLIDiary {
+impl<'a> CLIDiary<'a> {
     fn open(path: &Path) -> CLIDiary {
         match Diary::open(path) {
             Ok(diary) => CLIDiary { diary },

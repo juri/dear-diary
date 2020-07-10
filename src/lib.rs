@@ -7,9 +7,15 @@ use std::path::Path;
 
 use chrono::{DateTime, Utc};
 
-#[derive(Debug)]
-pub struct Diary {
+pub struct Diary<'a> {
     tree: filerepo::tree::Tree,
+    clock: Box<dyn Fn() -> DateTime<Utc> + 'a>,
+}
+
+impl fmt::Debug for Diary<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Diary").field("tree", &self.tree).finish()
+    }
 }
 
 #[derive(Debug)]
@@ -39,10 +45,21 @@ pub struct DiaryEntryKey {
     date: DateTime<Utc>,
 }
 
-impl Diary {
-    pub fn open(path: &Path) -> Result<Diary, DiaryError> {
+impl<'a> Diary<'a> {
+    pub fn open(path: &Path) -> Result<Diary<'a>, DiaryError> {
+        Diary::open_custom(path, Utc::now)
+    }
+
+    pub fn open_custom<C>(path: &Path, clock: C) -> Result<Diary<'a>, DiaryError>
+    where
+        C: 'a,
+        C: Fn() -> DateTime<Utc>,
+    {
         let tree = filerepo::tree::Tree::new(&path)?;
-        let diary = Diary { tree };
+        let diary = Diary {
+            tree,
+            clock: Box::new(clock),
+        };
         Ok(diary)
     }
 
