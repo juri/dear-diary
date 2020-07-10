@@ -42,10 +42,11 @@ pub fn main() {
     let diary = CLIDiary::open(&path);
     let entry = entryinput::read_entry();
     match entry {
-        Ok(e) => {
+        Ok(e) if e.len() > 0 => {
             println!("Created entry with key {:?}", diary.add_entry(&e));
             ()
         }
+        Ok(_) => (),
         Err(e) => {
             eprintln!("Failed to read entry: {}", e);
             process::exit(1)
