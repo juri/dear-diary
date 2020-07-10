@@ -1,6 +1,7 @@
 extern crate clap;
 
 mod diarydir;
+mod entryinput;
 
 use clap::{App, Arg};
 use diary_core::{Diary, DiaryEntryKey};
@@ -39,14 +40,26 @@ pub fn main() {
         });
     path.push(matches.value_of("name").unwrap_or("default"));
     let diary = CLIDiary::open(&path);
+    let entry = entryinput::read_entry();
+    match entry {
+        Ok(e) if e.len() > 0 => {
+            println!("Created entry with key {:?}", diary.add_entry(&e));
+            ()
+        }
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Failed to read entry: {}", e);
+            process::exit(1)
+        }
+    }
     diary.list_dates().first().map(|d| diary.show_entry(d));
 }
 
-struct CLIDiary {
-    diary: Diary,
+struct CLIDiary<'a> {
+    diary: Diary<'a>,
 }
 
-impl CLIDiary {
+impl<'a> CLIDiary<'a> {
     fn open(path: &Path) -> CLIDiary {
         match Diary::open(path) {
             Ok(diary) => CLIDiary { diary },
@@ -72,6 +85,16 @@ impl CLIDiary {
             Ok(keys) => keys,
             Err(err) => {
                 eprintln!("Error listing diary content: {}", err);
+                process::exit(1)
+            }
+        }
+    }
+
+    fn add_entry(&self, entry: &str) -> DiaryEntryKey {
+        match self.diary.add_entry(entry) {
+            Ok(key) => key,
+            Err(err) => {
+                eprintln!("Error creating entry: {}", err);
                 process::exit(1)
             }
         }

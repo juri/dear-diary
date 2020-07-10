@@ -36,6 +36,10 @@ impl Tree {
     pub fn get_text(&self, dt: &DateTime<Utc>) -> FileRepoResult<String> {
         get_text(&self.root, dt)
     }
+
+    pub fn add_entry(&self, dt: &DateTime<Utc>, text: &str) -> FileRepoResult<()> {
+        add_entry(&self.root, dt, text)
+    }
 }
 
 #[derive(Debug)]
@@ -81,12 +85,30 @@ fn get_text(dir: &Path, dt: &DateTime<Utc>) -> FileRepoResult<String> {
     }
 }
 
+fn add_entry(dir: &Path, dt: &DateTime<Utc>, text: &str) -> FileRepoResult<()> {
+    let path = file_directory(&dt);
+    let mut full_path = dir.join(&path);
+    fs::create_dir_all(&full_path)?;
+    full_path.push(format_file_name(dt));
+    fs::write(&full_path, text)?;
+    Ok(())
+}
+
 fn file_path(dt: &DateTime<Utc>) -> PathBuf {
+    let mut path = file_directory(dt);
+    path.push(format_file_name(dt));
+    path
+}
+
+fn file_directory(dt: &DateTime<Utc>) -> PathBuf {
     let mut path = PathBuf::new();
     path.push(format!("{:04}", dt.year()));
     path.push(format!("{:02}", dt.month()));
-    path.push(dt.format(FILE_NAME_FORMAT).to_string());
     path
+}
+
+fn format_file_name(dt: &DateTime<Utc>) -> String {
+    dt.format(FILE_NAME_FORMAT).to_string()
 }
 
 fn collect_dates(dir: &Path) -> FileRepoResult<Vec<DateTime<Utc>>> {

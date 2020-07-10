@@ -7,9 +7,15 @@ use std::path::Path;
 
 use chrono::{DateTime, Utc};
 
-#[derive(Debug)]
-pub struct Diary {
+pub struct Diary<'a> {
     tree: filerepo::tree::Tree,
+    clock: Box<dyn Fn() -> DateTime<Utc> + 'a>,
+}
+
+impl fmt::Debug for Diary<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Diary").field("tree", &self.tree).finish()
+    }
 }
 
 #[derive(Debug)]
@@ -35,14 +41,26 @@ impl Error for DiaryError {}
 
 type DiaryResult<T> = Result<T, DiaryError>;
 
+#[derive(Debug)]
 pub struct DiaryEntryKey {
     date: DateTime<Utc>,
 }
 
-impl Diary {
-    pub fn open(path: &Path) -> Result<Diary, DiaryError> {
+impl<'a> Diary<'a> {
+    pub fn open(path: &Path) -> Result<Diary<'a>, DiaryError> {
+        Diary::open_custom(path, Utc::now)
+    }
+
+    pub fn open_custom<C>(path: &Path, clock: C) -> Result<Diary<'a>, DiaryError>
+    where
+        C: 'a,
+        C: Fn() -> DateTime<Utc>,
+    {
         let tree = filerepo::tree::Tree::new(&path)?;
-        let diary = Diary { tree };
+        let diary = Diary {
+            tree,
+            clock: Box::new(clock),
+        };
         Ok(diary)
     }
 
@@ -55,5 +73,11 @@ impl Diary {
 
     pub fn get_text_for_entry(&self, key: &DiaryEntryKey) -> DiaryResult<String> {
         self.tree.get_text(&key.date).map_err(DiaryError::from)
+    }
+
+    pub fn add_entry(&self, content: &str) -> DiaryResult<DiaryEntryKey> {
+        let now = (self.clock)();
+        self.tree.add_entry(&now, content)?;
+        Ok(DiaryEntryKey { date: now })
     }
 }
