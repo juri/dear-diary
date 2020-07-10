@@ -82,11 +82,20 @@ fn get_text(dir: &Path, dt: &DateTime<Utc>) -> FileRepoResult<String> {
 }
 
 fn file_path(dt: &DateTime<Utc>) -> PathBuf {
+    let mut path = file_directory(dt);
+    path.push(format_file_name(dt));
+    path
+}
+
+fn file_directory(dt: &DateTime<Utc>) -> PathBuf {
     let mut path = PathBuf::new();
     path.push(format!("{:04}", dt.year()));
     path.push(format!("{:02}", dt.month()));
-    path.push(dt.format(FILE_NAME_FORMAT).to_string());
     path
+}
+
+fn format_file_name(dt: &DateTime<Utc>) -> String {
+    dt.format(FILE_NAME_FORMAT).to_string()
 }
 
 fn collect_dates(dir: &Path) -> FileRepoResult<Vec<DateTime<Utc>>> {
