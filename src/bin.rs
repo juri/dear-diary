@@ -41,7 +41,6 @@ pub fn main() {
     path.push(matches.value_of("name").unwrap_or("default"));
     let diary = CLIDiary::open(&path);
     let entry = entryinput::read_entry();
-    println!("got entry {:?}", entry);
     match entry {
         Ok(e) => {
             println!("Created entry with key {:?}", diary.add_entry(&e));
