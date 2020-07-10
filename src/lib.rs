@@ -41,6 +41,7 @@ impl Error for DiaryError {}
 
 type DiaryResult<T> = Result<T, DiaryError>;
 
+#[derive(Debug)]
 pub struct DiaryEntryKey {
     date: DateTime<Utc>,
 }
