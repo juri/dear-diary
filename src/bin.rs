@@ -42,6 +42,16 @@ pub fn main() {
     let diary = CLIDiary::open(&path);
     let entry = entryinput::read_entry();
     println!("got entry {:?}", entry);
+    match entry {
+        Ok(e) => {
+            println!("Created entry with key {:?}", diary.add_entry(&e));
+            ()
+        }
+        Err(e) => {
+            eprintln!("Failed to read entry: {}", e);
+            process::exit(1)
+        }
+    }
     diary.list_dates().first().map(|d| diary.show_entry(d));
 }
 
@@ -75,6 +85,16 @@ impl<'a> CLIDiary<'a> {
             Ok(keys) => keys,
             Err(err) => {
                 eprintln!("Error listing diary content: {}", err);
+                process::exit(1)
+            }
+        }
+    }
+
+    fn add_entry(&self, entry: &str) -> DiaryEntryKey {
+        match self.diary.add_entry(entry) {
+            Ok(key) => key,
+            Err(err) => {
+                eprintln!("Error creating entry: {}", err);
                 process::exit(1)
             }
         }

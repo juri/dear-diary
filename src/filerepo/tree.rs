@@ -36,6 +36,10 @@ impl Tree {
     pub fn get_text(&self, dt: &DateTime<Utc>) -> FileRepoResult<String> {
         get_text(&self.root, dt)
     }
+
+    pub fn add_entry(&self, dt: &DateTime<Utc>, text: &str) -> FileRepoResult<()> {
+        add_entry(&self.root, dt, text)
+    }
 }
 
 #[derive(Debug)]
@@ -79,6 +83,15 @@ fn get_text(dir: &Path, dt: &DateTime<Utc>) -> FileRepoResult<String> {
         Ok(s) => FileRepoResult::Ok(s),
         Err(e) => FileRepoResult::Err(FileRepoError::EntryContentDecodingError(e)),
     }
+}
+
+fn add_entry(dir: &Path, dt: &DateTime<Utc>, text: &str) -> FileRepoResult<()> {
+    let path = file_directory(&dt);
+    let mut full_path = dir.join(&path);
+    fs::create_dir_all(&full_path)?;
+    full_path.push(format_file_name(dt));
+    fs::write(&full_path, text)?;
+    Ok(())
 }
 
 fn file_path(dt: &DateTime<Utc>) -> PathBuf {
