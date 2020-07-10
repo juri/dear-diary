@@ -1,6 +1,7 @@
 extern crate clap;
 
 mod diarydir;
+mod entryinput;
 
 use clap::{App, Arg};
 use diary_core::{Diary, DiaryEntryKey};
@@ -39,6 +40,8 @@ pub fn main() {
         });
     path.push(matches.value_of("name").unwrap_or("default"));
     let diary = CLIDiary::open(&path);
+    let entry = entryinput::read_entry();
+    println!("got entry {:?}", entry);
     diary.list_dates().first().map(|d| diary.show_entry(d));
 }
 
