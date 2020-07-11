@@ -3,7 +3,7 @@ extern crate clap;
 mod diarydir;
 mod entryinput;
 
-use clap::{App, Arg};
+use clap::{App, Arg, SubCommand};
 use diary_core::{Diary, DiaryEntryKey};
 use std::path::{Path, PathBuf};
 use std::process;
@@ -28,6 +28,17 @@ pub fn main() {
                 .value_name("DIARY_NAME")
                 .help("Name of the diary")
                 .takes_value(true),
+        )
+        .subcommand(SubCommand::with_name("list").about("Lists entries"))
+        .subcommand(
+            SubCommand::with_name("show").about("Show an entry").arg(
+                Arg::with_name("date")
+                    .short("d")
+                    .long("date")
+                    .value_name("DATE")
+                    .help("Entry date")
+                    .takes_value(true),
+            ),
         )
         .get_matches();
     let mut path = matches
