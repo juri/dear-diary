@@ -46,6 +46,18 @@ pub struct DiaryEntryKey {
     date: DateTime<Utc>,
 }
 
+impl DiaryEntryKey {
+    pub fn parse_from_string(s: &str) -> Option<DiaryEntryKey> {
+        s.parse::<DateTime<Utc>>()
+            .map(|date| DiaryEntryKey { date })
+            .ok()
+    }
+
+    pub fn to_string(&self) -> String {
+        self.date.to_string()
+    }
+}
+
 impl<'a> Diary<'a> {
     pub fn open(path: &Path) -> Result<Diary<'a>, DiaryError> {
         Diary::open_custom(path, Utc::now)
