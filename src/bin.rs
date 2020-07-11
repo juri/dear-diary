@@ -52,30 +52,42 @@ pub fn main() {
     path.push(matches.value_of("name").unwrap_or("default"));
     let diary = CLIDiary::open(&path);
     if let Some(_) = matches.subcommand_matches("list") {
-        for key in diary.list_dates().iter().map(|k| k.to_string()) {
-            println!("{}", key)
-        }
+        list_entries(&diary);
     } else if let Some(show_matches) = matches.subcommand_matches("show") {
-        if let Some(date_param) = show_matches.value_of("date") {
-            if let Some(key) = DiaryEntryKey::parse_from_string(date_param) {
-                diary.show_entry(&key);
-            } else {
-                eprintln!("Failed to parse date {}", date_param);
-                process::exit(1);
-            }
-        }
+        show_entry(&diary, &show_matches);
     } else {
-        let entry = entryinput::read_entry();
-        match entry {
-            Ok(e) if e.len() > 0 => {
-                println!("Created entry with key {:?}", diary.add_entry(&e));
-                ()
-            }
-            Ok(_) => (),
-            Err(e) => {
-                eprintln!("Failed to read entry: {}", e);
-                process::exit(1)
-            }
+        add_entry(&diary);
+    }
+}
+
+fn list_entries(diary: &CLIDiary) {
+    for key in diary.list_dates().iter().map(|k| k.to_string()) {
+        println!("{}", key)
+    }
+}
+
+fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
+    if let Some(date_param) = matches.value_of("date") {
+        if let Some(key) = DiaryEntryKey::parse_from_string(date_param) {
+            diary.show_entry(&key);
+        } else {
+            eprintln!("Failed to parse date {}", date_param);
+            process::exit(1);
+        }
+    }
+}
+
+fn add_entry(diary: &CLIDiary) {
+    let entry = entryinput::read_entry();
+    match entry {
+        Ok(e) if e.len() > 0 => {
+            println!("Created entry with key {:?}", diary.add_entry(&e));
+            ()
+        }
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Failed to read entry: {}", e);
+            process::exit(1)
         }
     }
 }
