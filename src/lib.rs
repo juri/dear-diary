@@ -78,7 +78,7 @@ impl<'a> Diary<'a> {
 
     pub fn list_dates(&self) -> DiaryResult<Vec<DiaryEntryKey>> {
         self.tree
-            .list() // list_dates()
+            .list()
             .map_err(DiaryError::from)
             .map(|dates| dates.iter().map(|d| DiaryEntryKey { date: *d }).collect())
     }
