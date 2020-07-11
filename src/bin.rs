@@ -63,7 +63,6 @@ pub fn main() {
             process::exit(1)
         }
     }
-    diary.list_dates().first().map(|d| diary.show_entry(d));
 }
 
 struct CLIDiary<'a> {
