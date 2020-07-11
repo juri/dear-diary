@@ -61,7 +61,7 @@ pub fn main() {
 }
 
 fn list_entries(diary: &CLIDiary) {
-    for key in diary.list_dates().iter().map(|k| k.to_string()) {
+    for key in diary.list_keys().iter().map(|k| k.to_string()) {
         println!("{}", key)
     }
 }
@@ -117,8 +117,8 @@ impl<'a> CLIDiary<'a> {
         }
     }
 
-    fn list_dates(&self) -> Vec<DiaryEntryKey> {
-        match self.diary.list_dates() {
+    fn list_keys(&self) -> Vec<DiaryEntryKey> {
+        match self.diary.list_keys() {
             Ok(keys) => keys,
             Err(err) => {
                 eprintln!("Error listing diary content: {}", err);

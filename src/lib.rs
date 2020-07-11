@@ -76,7 +76,7 @@ impl<'a> Diary<'a> {
         Ok(diary)
     }
 
-    pub fn list_dates(&self) -> DiaryResult<Vec<DiaryEntryKey>> {
+    pub fn list_keys(&self) -> DiaryResult<Vec<DiaryEntryKey>> {
         self.tree
             .list()
             .map_err(DiaryError::from)
