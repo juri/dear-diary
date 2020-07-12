@@ -32,6 +32,15 @@ pub fn main() {
                 .takes_value(true),
         )
         .subcommand(
+            SubCommand::with_name("add").about("Add a diary entry").arg(
+                Arg::with_name("stdin")
+                    .short("s")
+                    .long("stdin")
+                    .help("Read entry from stdin")
+                    .takes_value(false),
+            ),
+        )
+        .subcommand(
             SubCommand::with_name("list")
                 .about("Lists entries")
                 .arg(
@@ -99,8 +108,8 @@ pub fn main() {
         list_entries(&diary, &list_matches);
     } else if let Some(show_matches) = matches.subcommand_matches("show") {
         show_entry(&diary, &show_matches);
-    } else {
-        add_entry(&diary);
+    } else if let Some(add_matches) = matches.subcommand_matches("add") {
+        add_entry_with_args(&diary, &add_matches);
     }
 }
 
@@ -233,8 +242,20 @@ fn check_entry_number(number: usize, keys: &Vec<DiaryEntryKey>) {
     }
 }
 
-fn add_entry(diary: &CLIDiary) {
-    let entry = entryinput::read_entry();
+fn add_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
+    let editor = if matches.is_present("stdin") {
+        AddEditor::Stdin
+    } else {
+        AddEditor::Environment
+    };
+    add_entry(diary, editor)
+}
+
+fn add_entry(diary: &CLIDiary, editor: AddEditor) {
+    let entry = match editor {
+        AddEditor::Stdin => entryinput::read_from_stdin(),
+        AddEditor::Environment => entryinput::read_entry(),
+    };
     match entry {
         Ok(e) if e.len() > 0 => {
             println!("Created entry with key {:?}", diary.add_entry(&e));
@@ -246,6 +267,11 @@ fn add_entry(diary: &CLIDiary) {
             process::exit(1)
         }
     }
+}
+
+enum AddEditor {
+    Environment,
+    Stdin,
 }
 
 #[cfg(test)]

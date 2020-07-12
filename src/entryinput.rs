@@ -37,7 +37,7 @@ fn open_external_editor(editor: &str) -> io::Result<String> {
     Ok(content)
 }
 
-fn read_from_stdin() -> io::Result<String> {
+pub fn read_from_stdin() -> io::Result<String> {
     let mut content = String::new();
     io::stdin().read_to_string(&mut content)?;
     Ok(content)
