@@ -20,7 +20,7 @@ Running `ddiary list` produces a list of diary entries, one entry per line. Each
 
 ### Displaying a diary entry
 
-The subcommand `show`, i.e. `ddiary show`, will display one entry. You can select the entry with a date, as displayed in `ddiary list`, or with a number, as shown in `ddiary show -e` or `ddiary show -E`.
+The subcommand `show`, i.e. `ddiary show`, will display one entry. You can select the entry with a date, as displayed in `ddiary list`, or with a number, as shown in `ddiary show -e` or `ddiary show -E`. Without any extra parameters `show` will display the latest entry.
 
 ## License
 
