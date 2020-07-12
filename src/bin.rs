@@ -1,11 +1,13 @@
 extern crate clap;
 
+mod clidiary;
 mod diarydir;
 mod entryinput;
 
 use clap::{App, Arg, SubCommand};
-use diary_core::{Diary, DiaryEntryKey};
-use std::path::{Path, PathBuf};
+use clidiary::CLIDiary;
+use diary_core::DiaryEntryKey;
+use std::path::PathBuf;
 use std::process;
 
 pub fn main() {
@@ -103,26 +105,54 @@ fn list_entries(diary: &CLIDiary, matches: &clap::ArgMatches) {
         eprintln!("Only one of enumerate and enumerate-reverse supported");
         process::exit(1)
     }
-    if enumerate {
-        let width = order_of_magnitude(keys.len());
-        for (index, key) in (1..).zip(keys) {
-            println!("{:width$} {}", index, key.to_string(), width = width);
+    let output = make_entry_list(
+        &keys,
+        if enumerate {
+            ListOption::Enumerate
+        } else if enumerate_reverse {
+            ListOption::EnumerateReverse
+        } else {
+            ListOption::Plain
+        },
+    );
+    for line in output {
+        println!("{}", line);
+    }
+}
+
+enum ListOption {
+    Enumerate,
+    EnumerateReverse,
+    Plain,
+}
+
+fn make_entry_list(keys: &Vec<DiaryEntryKey>, option: ListOption) -> Vec<String> {
+    match option {
+        ListOption::Enumerate => {
+            let width = order_of_magnitude(keys.len());
+            (1..)
+                .zip(keys)
+                .map(|(index, key): (usize, &DiaryEntryKey)| {
+                    format!("{:width$} {}", index, key.to_string(), width = width)
+                })
+                .collect()
         }
-    } else if enumerate_reverse {
-        let key_count = keys.len();
-        let width = order_of_magnitude(key_count);
-        for (index, key) in (0..).zip(keys) {
-            println!(
-                "{:width$} {}",
-                key_count - index,
-                key.to_string(),
-                width = width
-            );
+        ListOption::EnumerateReverse => {
+            let key_count = keys.len();
+            let width = order_of_magnitude(key_count);
+            (0..)
+                .zip(keys)
+                .map(|(index, key): (usize, &DiaryEntryKey)| {
+                    format!(
+                        "{:width$} {}",
+                        key_count - index,
+                        key.to_string(),
+                        width = width
+                    )
+                })
+                .collect()
         }
-    } else {
-        for key in keys.iter().map(|k| k.to_string()) {
-            println!("{}", key)
-        }
+        ListOption::Plain => keys.iter().map(|k| format!("{}", k.to_string())).collect(),
     }
 }
 
@@ -180,52 +210,6 @@ fn add_entry(diary: &CLIDiary) {
         Err(e) => {
             eprintln!("Failed to read entry: {}", e);
             process::exit(1)
-        }
-    }
-}
-
-struct CLIDiary<'a> {
-    diary: Diary<'a>,
-}
-
-impl<'a> CLIDiary<'a> {
-    fn open(path: &Path) -> CLIDiary {
-        match Diary::open(path) {
-            Ok(diary) => CLIDiary { diary },
-            Err(err) => {
-                eprintln!("Error opening diary: {}", err);
-                process::exit(1)
-            }
-        }
-    }
-
-    fn show_entry(&self, key: &DiaryEntryKey) {
-        match self.diary.get_text_for_entry(key) {
-            Ok(text) => println!("{}", text),
-            Err(err) => {
-                eprintln!("Error retrieving diary entry: {}", err);
-                process::exit(1)
-            }
-        }
-    }
-
-    fn list_keys(&self) -> Vec<DiaryEntryKey> {
-        match self.diary.list_keys() {
-            Ok(keys) => keys,
-            Err(err) => {
-                eprintln!("Error listing diary content: {}", err);
-                process::exit(1)
-            }
-        }
-    }
-
-    fn add_entry(&self, entry: &str) -> DiaryEntryKey {
-        match self.diary.add_entry(entry) {
-            Ok(key) => key,
-            Err(err) => {
-                eprintln!("Error creating entry: {}", err);
-                process::exit(1)
-            }
         }
     }
 }
