@@ -58,7 +58,7 @@ pub fn main() {
         )
         .subcommand(
             SubCommand::with_name("show")
-                .about("Show an entry")
+                .about("Show an entry. Without extra options will display the latest one.")
                 .arg(
                     Arg::with_name("date")
                         .short("d")
@@ -217,6 +217,11 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
         } else {
             eprintln!("Failed to parse number {}", ns);
             process::exit(1);
+        }
+    } else {
+        let keys = diary.list_keys();
+        if let Some(key) = keys.last() {
+            diary.show_entry(&key);
         }
     }
 }
