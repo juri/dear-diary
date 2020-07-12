@@ -32,13 +32,23 @@ pub fn main() {
                 .takes_value(true),
         )
         .subcommand(
-            SubCommand::with_name("add").about("Add a diary entry").arg(
-                Arg::with_name("stdin")
-                    .short("s")
-                    .long("stdin")
-                    .help("Read entry from stdin")
-                    .takes_value(false),
-            ),
+            SubCommand::with_name("add")
+                .about("Add a diary entry")
+                .arg(
+                    Arg::with_name("stdin")
+                        .short("s")
+                        .long("stdin")
+                        .help("Read entry from stdin")
+                        .takes_value(false),
+                )
+                .arg(
+                    Arg::with_name("date")
+                        .short("d")
+                        .long("date")
+                        .value_name("DATE")
+                        .help("Date for the new entry (defaults to creation time)")
+                        .takes_value(true),
+                ),
         )
         .subcommand(
             SubCommand::with_name("list")
@@ -252,17 +262,18 @@ fn add_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
     } else {
         AddEditor::Environment
     };
-    add_entry(diary, editor)
+    let key = matches.value_of("date").map(parse_date_param);
+    add_entry(diary, editor, key.as_ref())
 }
 
-fn add_entry(diary: &CLIDiary, editor: AddEditor) {
+fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<&DiaryEntryKey>) {
     let entry = match editor {
         AddEditor::Stdin => entryinput::read_from_stdin(),
         AddEditor::Environment => entryinput::read_entry(),
     };
     match entry {
         Ok(e) if e.len() > 0 => {
-            println!("Created entry with key {:?}", diary.add_entry(&e));
+            println!("Created entry with key {:?}", diary.add_entry(&e, key));
             ()
         }
         Ok(_) => (),

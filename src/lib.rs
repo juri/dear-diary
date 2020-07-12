@@ -92,10 +92,14 @@ impl<'a> Diary<'a> {
         self.tree.get_text(&key.date).map_err(DiaryError::from)
     }
 
-    pub fn add_entry(&self, content: &str) -> DiaryResult<DiaryEntryKey> {
-        let now = (self.clock)();
-        self.tree.add_entry(&now, content)?;
-        Ok(DiaryEntryKey { date: now })
+    pub fn add_entry(
+        &self,
+        content: &str,
+        key: Option<&DiaryEntryKey>,
+    ) -> DiaryResult<DiaryEntryKey> {
+        let entry_dt = key.map(|k| k.date).unwrap_or_else(|| (self.clock)());
+        self.tree.add_entry(&entry_dt, content)?;
+        Ok(DiaryEntryKey { date: entry_dt })
     }
 }
 
