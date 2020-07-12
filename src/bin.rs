@@ -47,6 +47,13 @@ pub fn main() {
                         .long("enumerate-reverse")
                         .help("Enumerate entries in descending order")
                         .takes_value(false),
+                )
+                .arg(
+                    Arg::with_name("sort-latest-first")
+                        .short("S")
+                        .long("sort-reverse")
+                        .help("Sort latest entry first")
+                        .takes_value(false),
                 ),
         )
         .subcommand(
@@ -105,6 +112,11 @@ fn list_entries(diary: &CLIDiary, matches: &clap::ArgMatches) {
         eprintln!("Only one of enumerate and enumerate-reverse supported");
         process::exit(1)
     }
+    let ordering = if matches.is_present("sort-latest-first") {
+        KeyOrdering::LatestFirst
+    } else {
+        KeyOrdering::EarliestFirst
+    };
     let output = make_entry_list(
         &keys,
         if enumerate {
@@ -114,7 +126,7 @@ fn list_entries(diary: &CLIDiary, matches: &clap::ArgMatches) {
         } else {
             ListOption::Plain
         },
-        KeyOrdering::EarliestFirst,
+        ordering,
     );
     for line in output {
         println!("{}", line);
