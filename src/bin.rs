@@ -213,3 +213,71 @@ fn add_entry(diary: &CLIDiary) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn plain_empty_entry_list_works() {
+        assert_eq!(
+            Vec::<String>::new(),
+            make_entry_list(&(vec![]), ListOption::Plain)
+        );
+    }
+
+    #[test]
+    fn enumerated_empty_entry_list_works() {
+        assert_eq!(
+            Vec::<String>::new(),
+            make_entry_list(&(vec![]), ListOption::Enumerate)
+        );
+    }
+
+    #[test]
+    fn reverse_enumerated_empty_entry_list_works() {
+        assert_eq!(
+            Vec::<String>::new(),
+            make_entry_list(&(vec![]), ListOption::EnumerateReverse)
+        );
+    }
+
+    #[test]
+    fn plain_entry_list_works() {
+        let dts1 = "2020-07-10 09:11:00 UTC";
+        let dts2 = "2020-07-10 20:51:00 UTC";
+        let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
+        let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
+        let entry_list = make_entry_list(&(vec![k1, k2]), ListOption::Plain);
+
+        assert_eq!(vec![dts1, dts2], entry_list);
+    }
+
+    #[test]
+    fn enumerated_entry_list_works() {
+        let dts1 = "2020-07-10 09:11:00 UTC";
+        let dts2 = "2020-07-10 20:51:00 UTC";
+        let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
+        let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
+        let entry_list = make_entry_list(&(vec![k1, k2]), ListOption::Enumerate);
+
+        assert_eq!(
+            vec![format!("1 {}", dts1), format!("2 {}", dts2)],
+            entry_list
+        );
+    }
+
+    #[test]
+    fn reverse_enumerated_entry_list_works() {
+        let dts1 = "2020-07-10 09:11:00 UTC";
+        let dts2 = "2020-07-10 20:51:00 UTC";
+        let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
+        let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
+        let entry_list = make_entry_list(&(vec![k1, k2]), ListOption::EnumerateReverse);
+
+        assert_eq!(
+            vec![format!("2 {}", dts1), format!("1 {}", dts2)],
+            entry_list
+        );
+    }
+}
