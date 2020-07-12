@@ -5,6 +5,7 @@ use std::error::Error;
 use std::fmt;
 use std::path::Path;
 
+use chrono::offset::TimeZone;
 use chrono::{DateTime, Utc};
 
 pub struct Diary<'a> {
@@ -46,6 +47,18 @@ pub struct DiaryEntryKey {
     date: DateTime<Utc>,
 }
 
+impl DiaryEntryKey {
+    pub fn parse_from_string(s: &str) -> Option<DiaryEntryKey> {
+        Utc.datetime_from_str(s, DEFAULT_KEY_FORMAT)
+            .map(|date| DiaryEntryKey { date })
+            .ok()
+    }
+
+    pub fn to_string(&self) -> String {
+        self.date.format(DEFAULT_KEY_FORMAT).to_string()
+    }
+}
+
 impl<'a> Diary<'a> {
     pub fn open(path: &Path) -> Result<Diary<'a>, DiaryError> {
         Diary::open_custom(path, Utc::now)
@@ -64,11 +77,15 @@ impl<'a> Diary<'a> {
         Ok(diary)
     }
 
-    pub fn list_dates(&self) -> DiaryResult<Vec<DiaryEntryKey>> {
-        self.tree
-            .list() // list_dates()
-            .map_err(DiaryError::from)
-            .map(|dates| dates.iter().map(|d| DiaryEntryKey { date: *d }).collect())
+    pub fn list_keys(&self) -> DiaryResult<Vec<DiaryEntryKey>> {
+        match self.tree.list().map_err(DiaryError::from) {
+            Ok(dates) => {
+                let mut mdates = dates;
+                mdates.sort_unstable();
+                Ok(mdates.iter().map(|d| DiaryEntryKey { date: *d }).collect())
+            }
+            Err(e) => Err(e),
+        }
     }
 
     pub fn get_text_for_entry(&self, key: &DiaryEntryKey) -> DiaryResult<String> {
@@ -81,3 +98,5 @@ impl<'a> Diary<'a> {
         Ok(DiaryEntryKey { date: now })
     }
 }
+
+static DEFAULT_KEY_FORMAT: &str = "%Y-%m-%d %H:%M %z";
