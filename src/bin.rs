@@ -201,12 +201,7 @@ fn order_of_magnitude(n: usize) -> usize {
 
 fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
     if let Some(date_param) = matches.value_of("date") {
-        if let Some(key) = DiaryEntryKey::parse_from_string(date_param) {
-            diary.show_entry(&key);
-        } else {
-            eprintln!("Failed to parse date {}", date_param);
-            process::exit(1);
-        }
+        diary.show_entry(&parse_date_param(date_param));
     } else if let Some(ns) = matches.value_of("number") {
         if let Some(number) = usize::from_str_radix(ns, 10).ok() {
             let keys = diary.list_keys();
@@ -232,6 +227,15 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
         if let Some(key) = keys.last() {
             diary.show_entry(&key);
         }
+    }
+}
+
+fn parse_date_param(s: &str) -> DiaryEntryKey {
+    if let Some(key) = DiaryEntryKey::parse_from_string(s) {
+        key
+    } else {
+        eprintln!("Failed to parse date {}", s);
+        process::exit(1);
     }
 }
 
