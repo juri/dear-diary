@@ -29,16 +29,51 @@ pub fn main() {
                 .help("Name of the diary")
                 .takes_value(true),
         )
-        .subcommand(SubCommand::with_name("list").about("Lists entries"))
         .subcommand(
-            SubCommand::with_name("show").about("Show an entry").arg(
-                Arg::with_name("date")
-                    .short("d")
-                    .long("date")
-                    .value_name("DATE")
-                    .help("Entry date")
-                    .takes_value(true),
-            ),
+            SubCommand::with_name("list")
+                .about("Lists entries")
+                .arg(
+                    Arg::with_name("enumerate")
+                        .short("e")
+                        .long("enumerate")
+                        .help("Enumerate entries in ascending order")
+                        .takes_value(false),
+                )
+                .arg(
+                    Arg::with_name("enumerate-reverse")
+                        .short("E")
+                        .long("enumerate-reverse")
+                        .help("Enumerate entries in descending order")
+                        .takes_value(false),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name("show")
+                .about("Show an entry")
+                .arg(
+                    Arg::with_name("date")
+                        .short("d")
+                        .long("date")
+                        .value_name("DATE")
+                        .help("Entry date")
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("number")
+                        .short("n")
+                        .long("number")
+                        .value_name("NUMBER")
+                        .help("Entry number (counting from first)")
+                        .takes_value(true),
+                )
+                .arg(
+                    Arg::with_name("reverse-number")
+                        .short("N")
+                        .long("reverse-number")
+                        .value_name("RNUMBER")
+                        .help("Entry number (counting from last)")
+                        .takes_value(true),
+                ),
         )
         .get_matches();
     let mut path = matches
@@ -51,8 +86,8 @@ pub fn main() {
         });
     path.push(matches.value_of("name").unwrap_or("default"));
     let diary = CLIDiary::open(&path);
-    if let Some(_) = matches.subcommand_matches("list") {
-        list_entries(&diary);
+    if let Some(list_matches) = matches.subcommand_matches("list") {
+        list_entries(&diary, &list_matches);
     } else if let Some(show_matches) = matches.subcommand_matches("show") {
         show_entry(&diary, &show_matches);
     } else {
@@ -60,10 +95,40 @@ pub fn main() {
     }
 }
 
-fn list_entries(diary: &CLIDiary) {
-    for key in diary.list_keys().iter().map(|k| k.to_string()) {
-        println!("{}", key)
+fn list_entries(diary: &CLIDiary, matches: &clap::ArgMatches) {
+    let keys = diary.list_keys();
+    let enumerate = matches.is_present("enumerate");
+    let enumerate_reverse = matches.is_present("enumerate-reverse");
+    if enumerate && enumerate_reverse {
+        eprintln!("Only one of enumerate and enumerate-reverse supported");
+        process::exit(1)
     }
+    if enumerate {
+        let width = order_of_magnitude(keys.len());
+        for (index, key) in (1..).zip(keys) {
+            println!("{:width$} {}", index, key.to_string(), width = width);
+        }
+    } else if enumerate_reverse {
+        let key_count = keys.len();
+        let width = order_of_magnitude(key_count);
+        for (index, key) in (0..).zip(keys) {
+            println!(
+                "{:width$} {}",
+                key_count - index,
+                key.to_string(),
+                width = width
+            );
+        }
+    } else {
+        for key in keys.iter().map(|k| k.to_string()) {
+            println!("{}", key)
+        }
+    }
+}
+
+fn order_of_magnitude(n: usize) -> usize {
+    let nd = n as f64;
+    nd.log10() as usize
 }
 
 fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
@@ -74,6 +139,33 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
             eprintln!("Failed to parse date {}", date_param);
             process::exit(1);
         }
+    } else if let Some(ns) = matches.value_of("number") {
+        if let Some(number) = usize::from_str_radix(ns, 10).ok() {
+            let keys = diary.list_keys();
+            check_entry_number(number, &keys);
+            let key = &keys[number - 1];
+            diary.show_entry(&key);
+        } else {
+            eprintln!("Failed to parse number {}", ns);
+            process::exit(1);
+        }
+    } else if let Some(ns) = matches.value_of("reverse-number") {
+        if let Some(number) = usize::from_str_radix(ns, 10).ok() {
+            let keys = diary.list_keys();
+            check_entry_number(number, &keys);
+            let key = &keys[keys.len() - number];
+            diary.show_entry(&key);
+        } else {
+            eprintln!("Failed to parse number {}", ns);
+            process::exit(1);
+        }
+    }
+}
+
+fn check_entry_number(number: usize, keys: &Vec<DiaryEntryKey>) {
+    if number > keys.len() {
+        eprintln!("Invalid entry number {}", number);
+        process::exit(1);
     }
 }
 
