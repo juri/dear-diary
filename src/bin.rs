@@ -277,8 +277,8 @@ mod tests {
 
     #[test]
     fn plain_entry_list_works() {
-        let dts1 = "2020-07-10 09:11:00 UTC";
-        let dts2 = "2020-07-10 20:51:00 UTC";
+        let dts1 = "2020-07-10 09:11 +0000";
+        let dts2 = "2020-07-10 20:51 +0000";
         let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
         let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
         let entry_list = make_entry_list(
@@ -292,8 +292,8 @@ mod tests {
 
     #[test]
     fn enumerated_entry_list_works() {
-        let dts1 = "2020-07-10 09:11:00 UTC";
-        let dts2 = "2020-07-10 20:51:00 UTC";
+        let dts1 = "2020-07-10 09:11 +0000";
+        let dts2 = "2020-07-10 20:51 +0000";
         let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
         let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
         let entry_list = make_entry_list(
@@ -310,8 +310,8 @@ mod tests {
 
     #[test]
     fn reverse_enumerated_entry_list_works() {
-        let dts1 = "2020-07-10 09:11:00 UTC";
-        let dts2 = "2020-07-10 20:51:00 UTC";
+        let dts1 = "2020-07-10 09:11 +0000";
+        let dts2 = "2020-07-10 20:51 +0000";
         let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
         let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
         let entry_list = make_entry_list(
@@ -328,8 +328,8 @@ mod tests {
 
     #[test]
     fn reverse_enumerated_entry_list_latest_first() {
-        let dts1 = "2020-07-10 09:11:00 UTC";
-        let dts2 = "2020-07-10 20:51:00 UTC";
+        let dts1 = "2020-07-10 09:11 +0000";
+        let dts2 = "2020-07-10 20:51 +0000";
         let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
         let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
         let entry_list = make_entry_list(
