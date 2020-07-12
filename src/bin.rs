@@ -114,6 +114,7 @@ fn list_entries(diary: &CLIDiary, matches: &clap::ArgMatches) {
         } else {
             ListOption::Plain
         },
+        KeyOrdering::EarliestFirst,
     );
     for line in output {
         println!("{}", line);
@@ -126,8 +127,12 @@ enum ListOption {
     Plain,
 }
 
-fn make_entry_list(keys: &Vec<DiaryEntryKey>, option: ListOption) -> Vec<String> {
-    match option {
+fn make_entry_list(
+    keys: &Vec<DiaryEntryKey>,
+    option: ListOption,
+    ordering: KeyOrdering,
+) -> Vec<String> {
+    let mut entries = match option {
         ListOption::Enumerate => {
             let width = order_of_magnitude(keys.len());
             (1..)
@@ -153,7 +158,19 @@ fn make_entry_list(keys: &Vec<DiaryEntryKey>, option: ListOption) -> Vec<String>
                 .collect()
         }
         ListOption::Plain => keys.iter().map(|k| format!("{}", k.to_string())).collect(),
+    };
+    match ordering {
+        KeyOrdering::EarliestFirst => entries,
+        KeyOrdering::LatestFirst => {
+            entries.reverse();
+            entries
+        }
     }
+}
+
+enum KeyOrdering {
+    LatestFirst,
+    EarliestFirst,
 }
 
 fn order_of_magnitude(n: usize) -> usize {
@@ -222,7 +239,7 @@ mod tests {
     fn plain_empty_entry_list_works() {
         assert_eq!(
             Vec::<String>::new(),
-            make_entry_list(&(vec![]), ListOption::Plain)
+            make_entry_list(&(vec![]), ListOption::Plain, KeyOrdering::EarliestFirst)
         );
     }
 
@@ -230,7 +247,7 @@ mod tests {
     fn enumerated_empty_entry_list_works() {
         assert_eq!(
             Vec::<String>::new(),
-            make_entry_list(&(vec![]), ListOption::Enumerate)
+            make_entry_list(&(vec![]), ListOption::Enumerate, KeyOrdering::EarliestFirst)
         );
     }
 
@@ -238,7 +255,11 @@ mod tests {
     fn reverse_enumerated_empty_entry_list_works() {
         assert_eq!(
             Vec::<String>::new(),
-            make_entry_list(&(vec![]), ListOption::EnumerateReverse)
+            make_entry_list(
+                &(vec![]),
+                ListOption::EnumerateReverse,
+                KeyOrdering::EarliestFirst
+            )
         );
     }
 
@@ -248,7 +269,11 @@ mod tests {
         let dts2 = "2020-07-10 20:51:00 UTC";
         let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
         let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
-        let entry_list = make_entry_list(&(vec![k1, k2]), ListOption::Plain);
+        let entry_list = make_entry_list(
+            &(vec![k1, k2]),
+            ListOption::Plain,
+            KeyOrdering::EarliestFirst,
+        );
 
         assert_eq!(vec![dts1, dts2], entry_list);
     }
@@ -259,7 +284,11 @@ mod tests {
         let dts2 = "2020-07-10 20:51:00 UTC";
         let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
         let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
-        let entry_list = make_entry_list(&(vec![k1, k2]), ListOption::Enumerate);
+        let entry_list = make_entry_list(
+            &(vec![k1, k2]),
+            ListOption::Enumerate,
+            KeyOrdering::EarliestFirst,
+        );
 
         assert_eq!(
             vec![format!("1 {}", dts1), format!("2 {}", dts2)],
@@ -273,10 +302,32 @@ mod tests {
         let dts2 = "2020-07-10 20:51:00 UTC";
         let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
         let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
-        let entry_list = make_entry_list(&(vec![k1, k2]), ListOption::EnumerateReverse);
+        let entry_list = make_entry_list(
+            &(vec![k1, k2]),
+            ListOption::EnumerateReverse,
+            KeyOrdering::EarliestFirst,
+        );
 
         assert_eq!(
             vec![format!("2 {}", dts1), format!("1 {}", dts2)],
+            entry_list
+        );
+    }
+
+    #[test]
+    fn reverse_enumerated_entry_list_latest_first() {
+        let dts1 = "2020-07-10 09:11:00 UTC";
+        let dts2 = "2020-07-10 20:51:00 UTC";
+        let k1 = DiaryEntryKey::parse_from_string(dts1).expect("Parsing dts1 failed");
+        let k2 = DiaryEntryKey::parse_from_string(dts2).expect("Parsing dts2 failed");
+        let entry_list = make_entry_list(
+            &(vec![k1, k2]),
+            ListOption::EnumerateReverse,
+            KeyOrdering::LatestFirst,
+        );
+
+        assert_eq!(
+            vec![format!("1 {}", dts2), format!("2 {}", dts1)],
             entry_list
         );
     }
