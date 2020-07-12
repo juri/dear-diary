@@ -77,10 +77,14 @@ impl<'a> Diary<'a> {
     }
 
     pub fn list_keys(&self) -> DiaryResult<Vec<DiaryEntryKey>> {
-        self.tree
-            .list()
-            .map_err(DiaryError::from)
-            .map(|dates| dates.iter().map(|d| DiaryEntryKey { date: *d }).collect())
+        match self.tree.list().map_err(DiaryError::from) {
+            Ok(dates) => {
+                let mut mdates = dates;
+                mdates.sort_unstable();
+                Ok(mdates.iter().map(|d| DiaryEntryKey { date: *d }).collect())
+            }
+            Err(e) => Err(e),
+        }
     }
 
     pub fn get_text_for_entry(&self, key: &DiaryEntryKey) -> DiaryResult<String> {
