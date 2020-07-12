@@ -10,3 +10,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Take diary path and name as a parameter, construct full path from them
 - Add new entries when running without other parameters (that don't exist yet)
+- List entries with `ddiary list`, show a single entry with `ddiary show`
