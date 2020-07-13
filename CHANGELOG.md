@@ -13,3 +13,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - List entries with `ddiary list`, show a single entry with `ddiary show`
 - Force stdin input with `ddiary add --stdin`
 - Allow specification of the date of the new entry with `ddiary add --date`
+- Fix date input to always allow arbitrary time zones
