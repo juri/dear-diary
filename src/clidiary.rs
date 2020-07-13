@@ -37,8 +37,8 @@ impl<'a> CLIDiary<'a> {
         }
     }
 
-    pub fn add_entry(&self, entry: &str) -> DiaryEntryKey {
-        match self.diary.add_entry(entry) {
+    pub fn add_entry(&self, entry: &str, key: Option<&DiaryEntryKey>) -> DiaryEntryKey {
+        match self.diary.add_entry(entry, key) {
             Ok(key) => key,
             Err(err) => {
                 eprintln!("Error creating entry: {}", err);

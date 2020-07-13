@@ -45,9 +45,20 @@ impl Tree {
 #[derive(Debug)]
 pub enum FileRepoError {
     BadPathError(PathBuf),
+    EntryNotFound(DateTime<Utc>),
     IoError(io::Error),
     NameParseError(String, chrono::ParseError),
     EntryContentDecodingError(string::FromUtf8Error),
+}
+
+impl FileRepoError {
+    fn from_ioerror(error: io::Error, dt: &DateTime<Utc>) -> FileRepoError {
+        if error.kind() == io::ErrorKind::NotFound {
+            FileRepoError::EntryNotFound(*dt)
+        } else {
+            FileRepoError::IoError(error)
+        }
+    }
 }
 
 impl fmt::Display for FileRepoError {
@@ -60,6 +71,7 @@ impl fmt::Display for FileRepoError {
                 write!(f, "IO Error: ")?;
                 e.fmt(f)
             }
+            FileRepoError::EntryNotFound(dt) => write!(f, "Entry for date {} not found", dt),
             FileRepoError::NameParseError(name, e) => {
                 write!(f, "Date parse error with name {}: {}", name, e)
             }
@@ -78,7 +90,7 @@ impl From<io::Error> for FileRepoError {
 
 fn get_text(dir: &Path, dt: &DateTime<Utc>) -> FileRepoResult<String> {
     let path = file_path(dt);
-    let data = fs::read(dir.join(path))?;
+    let data = fs::read(dir.join(path)).map_err(|e| FileRepoError::from_ioerror(e, dt))?;
     match String::from_utf8(data) {
         Ok(s) => FileRepoResult::Ok(s),
         Err(e) => FileRepoResult::Err(FileRepoError::EntryContentDecodingError(e)),

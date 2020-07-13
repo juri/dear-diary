@@ -5,7 +5,6 @@ use std::error::Error;
 use std::fmt;
 use std::path::Path;
 
-use chrono::offset::TimeZone;
 use chrono::{DateTime, Utc};
 
 pub struct Diary<'a> {
@@ -49,8 +48,10 @@ pub struct DiaryEntryKey {
 
 impl DiaryEntryKey {
     pub fn parse_from_string(s: &str) -> Option<DiaryEntryKey> {
-        Utc.datetime_from_str(s, DEFAULT_KEY_FORMAT)
-            .map(|date| DiaryEntryKey { date })
+        DateTime::parse_from_str(s, DEFAULT_KEY_FORMAT)
+            .map(|date| DiaryEntryKey {
+                date: date.with_timezone(&Utc),
+            })
             .ok()
     }
 
@@ -92,10 +93,23 @@ impl<'a> Diary<'a> {
         self.tree.get_text(&key.date).map_err(DiaryError::from)
     }
 
-    pub fn add_entry(&self, content: &str) -> DiaryResult<DiaryEntryKey> {
-        let now = (self.clock)();
-        self.tree.add_entry(&now, content)?;
-        Ok(DiaryEntryKey { date: now })
+    pub fn add_entry(
+        &self,
+        content: &str,
+        key: Option<&DiaryEntryKey>,
+    ) -> DiaryResult<DiaryEntryKey> {
+        let entry_dt = key.map(|k| k.date).unwrap_or_else(|| (self.clock)());
+        match self.tree.get_text(&entry_dt) {
+            Ok(old_text) => {
+                let full_text = format!("{}\n\n{}\n", old_text.trim_end(), content.trim_end());
+                self.tree.add_entry(&entry_dt, &full_text)?;
+            }
+            Err(_) => {
+                self.tree
+                    .add_entry(&entry_dt, &(format!("{}\n", content.trim_end())))?;
+            }
+        }
+        Ok(DiaryEntryKey { date: entry_dt })
     }
 }
 

@@ -16,7 +16,7 @@ pub fn main() {
         .author("Juri Pakaste <juri@juripakaste.fi>")
         .about("Manages diaries")
         .arg(
-            Arg::with_name("path")
+            Arg::with_name(args::opts::PATH)
                 .short("p")
                 .long("path")
                 .value_name("PATH")
@@ -24,7 +24,7 @@ pub fn main() {
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("name")
+            Arg::with_name(args::opts::NAME)
                 .short("n")
                 .long("name")
                 .value_name("DIARY_NAME")
@@ -32,24 +32,43 @@ pub fn main() {
                 .takes_value(true),
         )
         .subcommand(
-            SubCommand::with_name("list")
+            SubCommand::with_name(args::add::SUBCOMMAND)
+                .about("Add a diary entry")
+                .arg(
+                    Arg::with_name(args::add::STDIN)
+                        .short("s")
+                        .long("stdin")
+                        .help("Read entry from stdin")
+                        .takes_value(false),
+                )
+                .arg(
+                    Arg::with_name(args::add::DATE)
+                        .short("d")
+                        .long("date")
+                        .value_name("DATE")
+                        .help("Date for the new entry (defaults to creation time)")
+                        .takes_value(true),
+                ),
+        )
+        .subcommand(
+            SubCommand::with_name(args::list::SUBCOMMAND)
                 .about("Lists entries")
                 .arg(
-                    Arg::with_name("enumerate")
+                    Arg::with_name(args::list::ENUM)
                         .short("e")
                         .long("enumerate")
                         .help("Enumerate entries in ascending order")
                         .takes_value(false),
                 )
                 .arg(
-                    Arg::with_name("enumerate-reverse")
+                    Arg::with_name(args::list::ENUM_REVERSE)
                         .short("E")
                         .long("enumerate-reverse")
                         .help("Enumerate entries in descending order")
                         .takes_value(false),
                 )
                 .arg(
-                    Arg::with_name("sort-latest-first")
+                    Arg::with_name(args::list::SORT_REVERSE)
                         .short("S")
                         .long("sort-reverse")
                         .help("Sort latest entry first")
@@ -57,10 +76,10 @@ pub fn main() {
                 ),
         )
         .subcommand(
-            SubCommand::with_name("show")
+            SubCommand::with_name(args::show::SUBCOMMAND)
                 .about("Show an entry. Without extra options will display the latest one.")
                 .arg(
-                    Arg::with_name("date")
+                    Arg::with_name(args::show::DATE)
                         .short("d")
                         .long("date")
                         .value_name("DATE")
@@ -68,7 +87,7 @@ pub fn main() {
                         .takes_value(true),
                 )
                 .arg(
-                    Arg::with_name("number")
+                    Arg::with_name(args::show::NUMBER)
                         .short("n")
                         .long("number")
                         .value_name("NUMBER")
@@ -76,7 +95,7 @@ pub fn main() {
                         .takes_value(true),
                 )
                 .arg(
-                    Arg::with_name("reverse-number")
+                    Arg::with_name(args::show::NUMBER_REVERSE)
                         .short("N")
                         .long("reverse-number")
                         .value_name("RNUMBER")
@@ -86,33 +105,33 @@ pub fn main() {
         )
         .get_matches();
     let mut path = matches
-        .value_of("path")
+        .value_of(args::opts::PATH)
         .map(PathBuf::from)
         .or_else(|| diarydir::default_dir())
         .unwrap_or_else(|| {
             eprintln!("Couldn't determine diary root directory");
             process::exit(1)
         });
-    path.push(matches.value_of("name").unwrap_or("default"));
+    path.push(matches.value_of(args::opts::NAME).unwrap_or("default"));
     let diary = CLIDiary::open(&path);
-    if let Some(list_matches) = matches.subcommand_matches("list") {
+    if let Some(list_matches) = matches.subcommand_matches(args::list::SUBCOMMAND) {
         list_entries(&diary, &list_matches);
-    } else if let Some(show_matches) = matches.subcommand_matches("show") {
+    } else if let Some(show_matches) = matches.subcommand_matches(args::show::SUBCOMMAND) {
         show_entry(&diary, &show_matches);
-    } else {
-        add_entry(&diary);
+    } else if let Some(add_matches) = matches.subcommand_matches(args::add::SUBCOMMAND) {
+        add_entry_with_args(&diary, &add_matches);
     }
 }
 
 fn list_entries(diary: &CLIDiary, matches: &clap::ArgMatches) {
     let keys = diary.list_keys();
-    let enumerate = matches.is_present("enumerate");
-    let enumerate_reverse = matches.is_present("enumerate-reverse");
+    let enumerate = matches.is_present(args::list::ENUM);
+    let enumerate_reverse = matches.is_present(args::list::ENUM_REVERSE);
     if enumerate && enumerate_reverse {
         eprintln!("Only one of enumerate and enumerate-reverse supported");
         process::exit(1)
     }
-    let ordering = if matches.is_present("sort-latest-first") {
+    let ordering = if matches.is_present(args::list::SORT_REVERSE) {
         KeyOrdering::LatestFirst
     } else {
         KeyOrdering::EarliestFirst
@@ -191,14 +210,9 @@ fn order_of_magnitude(n: usize) -> usize {
 }
 
 fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
-    if let Some(date_param) = matches.value_of("date") {
-        if let Some(key) = DiaryEntryKey::parse_from_string(date_param) {
-            diary.show_entry(&key);
-        } else {
-            eprintln!("Failed to parse date {}", date_param);
-            process::exit(1);
-        }
-    } else if let Some(ns) = matches.value_of("number") {
+    if let Some(date_param) = matches.value_of(args::show::DATE) {
+        diary.show_entry(&parse_date_param(date_param));
+    } else if let Some(ns) = matches.value_of(args::show::NUMBER) {
         if let Some(number) = usize::from_str_radix(ns, 10).ok() {
             let keys = diary.list_keys();
             check_entry_number(number, &keys);
@@ -208,7 +222,7 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
             eprintln!("Failed to parse number {}", ns);
             process::exit(1);
         }
-    } else if let Some(ns) = matches.value_of("reverse-number") {
+    } else if let Some(ns) = matches.value_of(args::show::NUMBER_REVERSE) {
         if let Some(number) = usize::from_str_radix(ns, 10).ok() {
             let keys = diary.list_keys();
             check_entry_number(number, &keys);
@@ -226,6 +240,15 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
     }
 }
 
+fn parse_date_param(s: &str) -> DiaryEntryKey {
+    if let Some(key) = DiaryEntryKey::parse_from_string(s) {
+        key
+    } else {
+        eprintln!("Failed to parse date {}", s);
+        process::exit(1);
+    }
+}
+
 fn check_entry_number(number: usize, keys: &Vec<DiaryEntryKey>) {
     if number > keys.len() {
         eprintln!("Invalid entry number {}", number);
@@ -233,11 +256,24 @@ fn check_entry_number(number: usize, keys: &Vec<DiaryEntryKey>) {
     }
 }
 
-fn add_entry(diary: &CLIDiary) {
-    let entry = entryinput::read_entry();
+fn add_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
+    let editor = if matches.is_present(args::add::STDIN) {
+        AddEditor::Stdin
+    } else {
+        AddEditor::Environment
+    };
+    let key = matches.value_of(args::add::DATE).map(parse_date_param);
+    add_entry(diary, editor, key.as_ref())
+}
+
+fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<&DiaryEntryKey>) {
+    let entry = match editor {
+        AddEditor::Stdin => entryinput::read_from_stdin(),
+        AddEditor::Environment => entryinput::read_entry(),
+    };
     match entry {
         Ok(e) if e.len() > 0 => {
-            println!("Created entry with key {:?}", diary.add_entry(&e));
+            println!("Created entry with key {:?}", diary.add_entry(&e, key));
             ()
         }
         Ok(_) => (),
@@ -245,6 +281,38 @@ fn add_entry(diary: &CLIDiary) {
             eprintln!("Failed to read entry: {}", e);
             process::exit(1)
         }
+    }
+}
+
+enum AddEditor {
+    Environment,
+    Stdin,
+}
+
+mod args {
+    pub mod opts {
+        pub static NAME: &str = "name";
+        pub static PATH: &str = "path";
+    }
+
+    pub mod add {
+        pub static SUBCOMMAND: &str = "add";
+        pub static STDIN: &str = "stdin";
+        pub static DATE: &str = "date";
+    }
+
+    pub mod list {
+        pub static SUBCOMMAND: &str = "list";
+        pub static ENUM: &str = "enumerate";
+        pub static ENUM_REVERSE: &str = "enumerate-reverse";
+        pub static SORT_REVERSE: &str = "sort-latest-first";
+    }
+
+    pub mod show {
+        pub static SUBCOMMAND: &str = "show";
+        pub static DATE: &str = "date";
+        pub static NUMBER: &str = "number";
+        pub static NUMBER_REVERSE: &str = "number-reverse";
     }
 }
 
