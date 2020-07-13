@@ -98,7 +98,16 @@ impl<'a> Diary<'a> {
         key: Option<&DiaryEntryKey>,
     ) -> DiaryResult<DiaryEntryKey> {
         let entry_dt = key.map(|k| k.date).unwrap_or_else(|| (self.clock)());
-        self.tree.add_entry(&entry_dt, content)?;
+        match self.tree.get_text(&entry_dt) {
+            Ok(old_text) => {
+                let full_text = format!("{}\n\n{}\n", old_text.trim_end(), content.trim_end());
+                self.tree.add_entry(&entry_dt, &full_text)?;
+            }
+            Err(_) => {
+                self.tree
+                    .add_entry(&entry_dt, &(format!("{}\n", content.trim_end())))?;
+            }
+        }
         Ok(DiaryEntryKey { date: entry_dt })
     }
 }
