@@ -5,7 +5,6 @@ use std::error::Error;
 use std::fmt;
 use std::path::Path;
 
-use chrono::offset::TimeZone;
 use chrono::{DateTime, Utc};
 
 pub struct Diary<'a> {
@@ -49,8 +48,10 @@ pub struct DiaryEntryKey {
 
 impl DiaryEntryKey {
     pub fn parse_from_string(s: &str) -> Option<DiaryEntryKey> {
-        Utc.datetime_from_str(s, DEFAULT_KEY_FORMAT)
-            .map(|date| DiaryEntryKey { date })
+        DateTime::parse_from_str(s, DEFAULT_KEY_FORMAT)
+            .map(|date| DiaryEntryKey {
+                date: date.with_timezone(&Utc),
+            })
             .ok()
     }
 
