@@ -1,9 +1,23 @@
 extern crate pom;
 
 use pom::parser::*;
-use pom::Parser;
 
 use std::iter::FromIterator;
+
+pub fn find_tags(s: &str) -> Vec<String> {
+    let chars: Vec<char> = s.chars().collect();
+    let res = text_parts().parse(&chars);
+    res.map(|parts| {
+        parts
+            .iter()
+            .filter_map(|p| match p {
+                TextPart::Str(_) => None,
+                TextPart::Tag(t) => Some(t.to_string()),
+            })
+            .collect()
+    })
+    .unwrap_or(vec![])
+}
 
 #[derive(Debug, PartialEq)]
 enum TextPart {
@@ -17,63 +31,63 @@ enum ParsedPart {
     Tag(String),
 }
 
-fn phrase_start() -> Parser<char, usize> {
+fn phrase_start<'a>() -> Parser<'a, char, usize> {
     let hashes = sym('#').repeat(1..);
     let paren = sym('(');
     let start = hashes - paren;
     start.map(|h| h.len())
 }
 
-fn phrase_end(len: usize) -> Parser<char, ()> {
+fn phrase_end<'a>(len: usize) -> Parser<'a, char, ()> {
     let hashes = sym('#').repeat(len..len + 1);
     let paren = sym(')');
     (paren - hashes).discard()
 }
 
-fn phrase_content_char<F>(make_end_parser: F) -> Parser<char, char>
+fn phrase_content_char<'a, F>(make_end_parser: F) -> Parser<'a, char, char>
 where
-    F: Fn() -> Parser<char, ()>,
+    F: Fn() -> Parser<'a, char, ()>,
 {
     let end_parser = make_end_parser();
     !end_parser * (take(1).map(|cs| cs[0]))
 }
 
-// fn phrase_content_until(end_parser: Parser<char, ()>) -> Parser<char, String> {
-fn phrase_content_until<F>(make_end_parser: F) -> Parser<char, String>
+// fn phrase_content_until(end_parser: Parser<'a, char, ()>) -> Parser<'a, char, String> {
+fn phrase_content_until<'a, F>(make_end_parser: F) -> Parser<'a, char, String>
 where
-    F: Fn() -> Parser<char, ()>,
+    F: Fn() -> Parser<'a, char, ()>,
 {
     let end_parser = make_end_parser();
     (phrase_content_char(make_end_parser).repeat(1..) - end_parser)
         .map(|chars| String::from_iter(chars))
 }
 
-fn phrase_hash() -> Parser<char, String> {
+fn phrase_hash<'a>() -> Parser<'a, char, String> {
     phrase_start() >> (|c| phrase_content_until(|| phrase_end(c)))
 }
 
-fn word_hash() -> Parser<char, String> {
+fn word_hash<'a>() -> Parser<'a, char, String> {
     (sym('#') * (is_a(|c: char| c.is_alphanumeric()).repeat(1..)))
         .map(|chars| chars.into_iter().collect())
 }
 
-fn word_hash_as_parsed_part() -> Parser<char, ParsedPart> {
+fn word_hash_as_parsed_part<'a>() -> Parser<'a, char, ParsedPart> {
     word_hash().map(ParsedPart::Tag)
 }
 
-fn char_as_parsed_part() -> Parser<char, ParsedPart> {
+fn char_as_parsed_part<'a>() -> Parser<'a, char, ParsedPart> {
     take(1).map(|c: &[char]| ParsedPart::Char(c[0]))
 }
 
-fn phrase_hash_as_parsed_part() -> Parser<char, ParsedPart> {
+fn phrase_hash_as_parsed_part<'a>() -> Parser<'a, char, ParsedPart> {
     phrase_hash().map(ParsedPart::Tag)
 }
 
-fn char_or_hash() -> Parser<char, ParsedPart> {
+fn char_or_hash<'a>() -> Parser<'a, char, ParsedPart> {
     phrase_hash_as_parsed_part() | word_hash_as_parsed_part() | char_as_parsed_part()
 }
 
-fn parsed_parts() -> Parser<char, Vec<ParsedPart>> {
+fn parsed_parts<'a>() -> Parser<'a, char, Vec<ParsedPart>> {
     char_or_hash().repeat(0..)
 }
 
@@ -82,7 +96,7 @@ enum CollectedPart {
     Tag(String),
 }
 
-fn collected_parts() -> Parser<char, Vec<CollectedPart>> {
+fn collected_parts<'a>() -> Parser<'a, char, Vec<CollectedPart>> {
     parsed_parts().map(|pps| {
         let mut cps: Vec<CollectedPart> = Vec::with_capacity(pps.len() / 4); // guess!
         let mut current: Vec<char> = Vec::new();
@@ -105,7 +119,7 @@ fn collected_parts() -> Parser<char, Vec<CollectedPart>> {
     })
 }
 
-fn text_parts() -> Parser<char, Vec<TextPart>> {
+fn text_parts<'a>() -> Parser<'a, char, Vec<TextPart>> {
     collected_parts().map(|parts| {
         parts
             .iter()
@@ -197,5 +211,11 @@ mod tests {
                 TextPart::Str(" qw".to_string())
             ])
         )
+    }
+
+    #[test]
+    fn find_tags_finds_tags() {
+        let tags = find_tags("hello #world this is a #(phrase tag)#, whee");
+        assert_eq!(tags, vec!["world", "phrase tag"]);
     }
 }
