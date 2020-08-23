@@ -116,7 +116,7 @@ fn collected_parts<'a>() -> Parser<'a, char, Vec<CollectedPart>> {
             }
         }
         if !current.is_empty() {
-            cps.push(CollectedPart::Chars(current.clone()));
+            cps.push(CollectedPart::Chars(current));
         }
         cps
     })
