@@ -103,6 +103,7 @@ impl<'a> Diary<'a> {
             date: (self.clock)(),
         });
         let entry_dt = key.date;
+        self.save_tags(&key, content);
         match self.tree.get_text(&entry_dt) {
             Ok(old_text) => {
                 let full_text = format!("{}\n\n{}\n", old_text.trim_end(), content.trim_end());
@@ -114,6 +115,11 @@ impl<'a> Diary<'a> {
             }
         }
         Ok(DiaryEntryKey { date: entry_dt })
+    }
+
+    fn save_tags(&self, _: &DiaryEntryKey, text: &str) {
+        let tags = tagparser::find_tags(text);
+        println!("tags found: {:?}", tags)
     }
 }
 
