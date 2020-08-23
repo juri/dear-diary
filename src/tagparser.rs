@@ -127,7 +127,7 @@ fn text_parts<'a>() -> Parser<'a, char, Vec<TextPart>> {
         parts
             .iter()
             .map(|cp| match cp {
-                CollectedPart::Chars(chars) => TextPart::Str(chars.into_iter().collect()),
+                CollectedPart::Chars(chars) => TextPart::Str(chars.iter().collect()),
                 CollectedPart::Tag(tag) => TextPart::Tag(tag.to_string()),
             })
             .collect()
