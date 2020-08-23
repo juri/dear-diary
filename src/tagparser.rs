@@ -7,16 +7,20 @@ use std::iter::FromIterator;
 pub fn find_tags(s: &str) -> Vec<String> {
     let chars: Vec<char> = s.chars().collect();
     let res = text_parts().parse(&chars);
-    res.map(|parts| {
-        parts
-            .iter()
-            .filter_map(|p| match p {
-                TextPart::Str(_) => None,
-                TextPart::Tag(t) => Some(t.to_string()),
-            })
-            .collect()
-    })
-    .unwrap_or(vec![])
+    let mut tags = res
+        .map(|parts| {
+            parts
+                .iter()
+                .filter_map(|p| match p {
+                    TextPart::Str(_) => None,
+                    TextPart::Tag(t) => Some(t.to_string()),
+                })
+                .collect()
+        })
+        .unwrap_or(vec![]);
+    tags.sort();
+    tags.dedup();
+    tags
 }
 
 #[derive(Debug, PartialEq)]
@@ -216,6 +220,12 @@ mod tests {
     #[test]
     fn find_tags_finds_tags() {
         let tags = find_tags("hello #world this is a #(phrase tag)#, whee");
-        assert_eq!(tags, vec!["world", "phrase tag"]);
+        assert_eq!(tags, vec!["phrase tag", "world"]);
+    }
+
+    #[test]
+    fn find_tags_deduplicates_tags() {
+        let tags = find_tags("#a #b #a #b #c #a #c");
+        assert_eq!(tags, vec!["a", "b", "c"]);
     }
 }
