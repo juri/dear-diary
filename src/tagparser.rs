@@ -17,7 +17,7 @@ pub fn find_tags(s: &str) -> Vec<String> {
                 })
                 .collect()
         })
-        .unwrap_or(vec![]);
+        .unwrap_or_else(|_| vec![]);
     tags.sort();
     tags.dedup();
     tags
