@@ -263,10 +263,10 @@ fn add_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
         AddEditor::Environment
     };
     let key = matches.value_of(args::add::DATE).map(parse_date_param);
-    add_entry(diary, editor, key.as_ref())
+    add_entry(diary, editor, key)
 }
 
-fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<&DiaryEntryKey>) {
+fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<DiaryEntryKey>) {
     let entry = match editor {
         AddEditor::Stdin => entryinput::read_from_stdin(),
         AddEditor::Environment => entryinput::read_entry(),
