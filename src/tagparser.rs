@@ -62,8 +62,7 @@ where
     F: Fn() -> Parser<'a, char, ()>,
 {
     let end_parser = make_end_parser();
-    (phrase_content_char(make_end_parser).repeat(1..) - end_parser)
-        .map(|chars| String::from_iter(chars))
+    (phrase_content_char(make_end_parser).repeat(1..) - end_parser).map(String::from_iter)
 }
 
 fn phrase_hash<'a>() -> Parser<'a, char, String> {
