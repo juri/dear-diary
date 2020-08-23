@@ -55,9 +55,11 @@ impl DiaryEntryKey {
             })
             .ok()
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.date.format(DEFAULT_KEY_FORMAT).to_string()
+impl fmt::Display for DiaryEntryKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.date.format(DEFAULT_KEY_FORMAT).to_string())
     }
 }
 
