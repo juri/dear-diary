@@ -1,5 +1,6 @@
 pub mod filerepo;
 pub mod model;
+mod tagparser;
 
 use std::error::Error;
 use std::fmt;
