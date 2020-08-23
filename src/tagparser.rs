@@ -52,6 +52,15 @@ fn phrase_hash() -> Parser<char, String> {
     phrase_start() >> (|c| phrase_content_until(|| phrase_end(c)))
 }
 
+fn word_hash() -> Parser<char, String> {
+    (sym('#') * (is_a(|c: char| c.is_alphanumeric()).repeat(1..)))
+        .map(|chars| chars.into_iter().collect())
+}
+
+fn word_hash_as_parsed_part() -> Parser<char, ParsedPart> {
+    word_hash().map(ParsedPart::Tag)
+}
+
 fn char_as_parsed_part() -> Parser<char, ParsedPart> {
     take(1).map(|c: &[char]| ParsedPart::Char(c[0]))
 }
@@ -61,7 +70,7 @@ fn phrase_hash_as_parsed_part() -> Parser<char, ParsedPart> {
 }
 
 fn char_or_hash() -> Parser<char, ParsedPart> {
-    phrase_hash_as_parsed_part() | char_as_parsed_part()
+    phrase_hash_as_parsed_part() | word_hash_as_parsed_part() | char_as_parsed_part()
 }
 
 fn parsed_parts() -> Parser<char, Vec<ParsedPart>> {
@@ -169,15 +178,23 @@ mod tests {
     }
 
     #[test]
+    fn word_hash_matches() {
+        let output = word_hash().parse(&['#', 'a', 's', 'd', 'f']);
+        assert_eq!(output, Ok("asdf".to_string()))
+    }
+
+    #[test]
     fn text_parts_collects_all() {
-        let output =
-            text_parts().parse(&['a', 'b', ' ', '#', '#', '(', 'c', 'd', ')', '#', '#', 'z']);
+        let output = text_parts().parse(&[
+            'a', 'b', ' ', '#', '#', '(', 'c', 'd', ')', '#', '#', '#', 'z', ' ', 'q', 'w',
+        ]);
         assert_eq!(
             output,
             Ok(vec![
                 TextPart::Str("ab ".to_string()),
                 TextPart::Tag("cd".to_string()),
-                TextPart::Str("z".to_string())
+                TextPart::Tag("z".to_string()),
+                TextPart::Str(" qw".to_string())
             ])
         )
     }
