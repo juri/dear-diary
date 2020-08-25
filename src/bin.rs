@@ -188,7 +188,7 @@ fn make_entry_list(
                 })
                 .collect()
         }
-        ListOption::Plain => keys.iter().map(|k| format!("{}", k.to_string())).collect(),
+        ListOption::Plain => keys.iter().map(|k| k.to_string()).collect(),
     };
     match ordering {
         KeyOrdering::EarliestFirst => entries,
