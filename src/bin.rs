@@ -274,7 +274,6 @@ fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<DiaryEntryKey>) {
     match entry {
         Ok(e) if e.len() > 0 => {
             println!("Created entry with key {:?}", diary.add_entry(&e, key));
-            ()
         }
         Ok(_) => (),
         Err(e) => {
