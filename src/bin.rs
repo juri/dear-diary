@@ -159,7 +159,7 @@ enum ListOption {
 }
 
 fn make_entry_list(
-    keys: &Vec<DiaryEntryKey>,
+    keys: &[DiaryEntryKey],
     option: ListOption,
     ordering: KeyOrdering,
 ) -> Vec<String> {
