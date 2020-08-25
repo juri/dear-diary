@@ -107,7 +107,7 @@ pub fn main() {
     let mut path = matches
         .value_of(args::opts::PATH)
         .map(PathBuf::from)
-        .or_else(|| diarydir::default_dir())
+        .or_else(diarydir::default_dir)
         .unwrap_or_else(|| {
             eprintln!("Couldn't determine diary root directory");
             process::exit(1)
