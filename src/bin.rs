@@ -249,7 +249,7 @@ fn parse_date_param(s: &str) -> DiaryEntryKey {
     }
 }
 
-fn check_entry_number(number: usize, keys: &Vec<DiaryEntryKey>) {
+fn check_entry_number(number: usize, keys: &[DiaryEntryKey]) {
     if number > keys.len() {
         eprintln!("Invalid entry number {}", number);
         process::exit(1);
