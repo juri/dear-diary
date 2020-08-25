@@ -9,7 +9,7 @@ use chrono::prelude::*;
 
 #[derive(Debug)]
 pub struct Tree {
-    root: PathBuf,
+    pub root: PathBuf,
 }
 
 pub type FileRepoResult<T> = Result<T, FileRepoError>;
