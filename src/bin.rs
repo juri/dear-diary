@@ -213,7 +213,7 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
     if let Some(date_param) = matches.value_of(args::show::DATE) {
         diary.show_entry(&parse_date_param(date_param));
     } else if let Some(ns) = matches.value_of(args::show::NUMBER) {
-        if let Some(number) = usize::from_str_radix(ns, 10).ok() {
+        if let Ok(number) = usize::from_str_radix(ns, 10) {
             let keys = diary.list_keys();
             check_entry_number(number, &keys);
             let key = &keys[number - 1];
@@ -223,7 +223,7 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
             process::exit(1);
         }
     } else if let Some(ns) = matches.value_of(args::show::NUMBER_REVERSE) {
-        if let Some(number) = usize::from_str_radix(ns, 10).ok() {
+        if let Ok(number) = usize::from_str_radix(ns, 10) {
             let keys = diary.list_keys();
             check_entry_number(number, &keys);
             let key = &keys[keys.len() - number];
