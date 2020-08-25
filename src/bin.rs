@@ -272,7 +272,7 @@ fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<DiaryEntryKey>) {
         AddEditor::Environment => entryinput::read_entry(),
     };
     match entry {
-        Ok(e) if e.len() > 0 => {
+        Ok(e) if !e.is_empty() => {
             println!("Created entry with key {:?}", diary.add_entry(&e, key));
         }
         Ok(_) => (),
