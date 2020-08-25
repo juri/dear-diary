@@ -16,6 +16,7 @@ path = "src/bin.rs"
 chrono = "0.4"
 directories = "3.0.1"
 pom = "3.1.0"
+rusqlite = "0.24.0"
 tempfile = "3.1.0"
 
 [dependencies.clap]

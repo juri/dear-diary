@@ -113,13 +113,13 @@ pub fn main() {
             process::exit(1)
         });
     path.push(matches.value_of(args::opts::NAME).unwrap_or("default"));
-    let diary = CLIDiary::open(&path);
+    let mut diary = CLIDiary::open(&path);
     if let Some(list_matches) = matches.subcommand_matches(args::list::SUBCOMMAND) {
         list_entries(&diary, &list_matches);
     } else if let Some(show_matches) = matches.subcommand_matches(args::show::SUBCOMMAND) {
         show_entry(&diary, &show_matches);
     } else if let Some(add_matches) = matches.subcommand_matches(args::add::SUBCOMMAND) {
-        add_entry_with_args(&diary, &add_matches);
+        add_entry_with_args(&mut diary, &add_matches);
     }
 }
 
@@ -256,7 +256,7 @@ fn check_entry_number(number: usize, keys: &[DiaryEntryKey]) {
     }
 }
 
-fn add_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
+fn add_entry_with_args(diary: &mut CLIDiary, matches: &clap::ArgMatches) {
     let editor = if matches.is_present(args::add::STDIN) {
         AddEditor::Stdin
     } else {
@@ -266,7 +266,7 @@ fn add_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
     add_entry(diary, editor, key)
 }
 
-fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<DiaryEntryKey>) {
+fn add_entry(diary: &mut CLIDiary, editor: AddEditor, key: Option<DiaryEntryKey>) {
     let entry = match editor {
         AddEditor::Stdin => entryinput::read_from_stdin(),
         AddEditor::Environment => entryinput::read_entry(),

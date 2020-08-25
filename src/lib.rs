@@ -1,7 +1,9 @@
 pub mod filerepo;
+mod index;
 pub mod model;
 mod tagparser;
 
+use index::tags::{TagIndex, TagIndexResult};
 use std::error::Error;
 use std::fmt;
 use std::path::Path;
@@ -10,6 +12,7 @@ use chrono::{DateTime, Utc};
 
 pub struct Diary<'a> {
     clock: Box<dyn Fn() -> DateTime<Utc> + 'a>,
+    tag_index: Option<TagIndex>,
     tree: filerepo::tree::Tree,
 }
 
@@ -22,6 +25,7 @@ impl fmt::Debug for Diary<'_> {
 #[derive(Debug)]
 pub enum DiaryError {
     FileRepoError(filerepo::tree::FileRepoError),
+    TagIndexError(index::tags::TagIndexError),
 }
 
 impl From<filerepo::tree::FileRepoError> for DiaryError {
@@ -30,10 +34,17 @@ impl From<filerepo::tree::FileRepoError> for DiaryError {
     }
 }
 
+impl From<index::tags::TagIndexError> for DiaryError {
+    fn from(error: index::tags::TagIndexError) -> DiaryError {
+        DiaryError::TagIndexError(error)
+    }
+}
+
 impl fmt::Display for DiaryError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             DiaryError::FileRepoError(e) => write!(f, "File repository error: {}", e),
+            DiaryError::TagIndexError(e) => write!(f, "Tag index error: {}", e),
         }
     }
 }
@@ -76,6 +87,7 @@ impl<'a> Diary<'a> {
         let tree = filerepo::tree::Tree::new(&path)?;
         let diary = Diary {
             clock: Box::new(clock),
+            tag_index: None,
             tree,
         };
         Ok(diary)
@@ -97,7 +109,7 @@ impl<'a> Diary<'a> {
     }
 
     pub fn add_entry(
-        &self,
+        &mut self,
         content: &str,
         key: Option<DiaryEntryKey>,
     ) -> DiaryResult<DiaryEntryKey> {
@@ -105,7 +117,7 @@ impl<'a> Diary<'a> {
             date: (self.clock)(),
         });
         let entry_dt = key.date;
-        self.save_tags(&key, content);
+        self.save_tags(&key, content)?;
         match self.tree.get_text(&entry_dt) {
             Ok(old_text) => {
                 let full_text = format!("{}\n\n{}\n", old_text.trim_end(), content.trim_end());
@@ -119,9 +131,21 @@ impl<'a> Diary<'a> {
         Ok(DiaryEntryKey { date: entry_dt })
     }
 
-    fn save_tags(&self, _: &DiaryEntryKey, text: &str) {
+    fn save_tags(&mut self, key: &DiaryEntryKey, text: &str) -> DiaryResult<()> {
         let tags = tagparser::find_tags(text);
-        println!("tags found: {:?}", tags)
+        println!("tags found: {:?}", tags);
+        let tag_index = self.initialized_tag_index()?;
+        tag_index.set_tags(key, &tags)?;
+        Ok(())
+    }
+
+    fn initialized_tag_index(&mut self) -> TagIndexResult<&index::tags::TagIndex> {
+        if self.tag_index.is_none() {
+            let tag_index = index::tags::TagIndex::new(&self.tree.root)?;
+            tag_index.initdb()?;
+            self.tag_index = Some(tag_index);
+        }
+        Ok(&self.tag_index.as_ref().unwrap())
     }
 }
 
