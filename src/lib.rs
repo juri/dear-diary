@@ -9,8 +9,8 @@ use std::path::Path;
 use chrono::{DateTime, Utc};
 
 pub struct Diary<'a> {
-    tree: filerepo::tree::Tree,
     clock: Box<dyn Fn() -> DateTime<Utc> + 'a>,
+    tree: filerepo::tree::Tree,
 }
 
 impl fmt::Debug for Diary<'_> {
@@ -75,8 +75,8 @@ impl<'a> Diary<'a> {
     {
         let tree = filerepo::tree::Tree::new(&path)?;
         let diary = Diary {
-            tree,
             clock: Box::new(clock),
+            tree,
         };
         Ok(diary)
     }
