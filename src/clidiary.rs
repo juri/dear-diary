@@ -1,4 +1,4 @@
-use diary_core::{Diary, DiaryEntryKey};
+use diary_core::{Diary, DiaryEntryKey, TagIndex};
 use std::path::Path;
 use std::process;
 
@@ -37,11 +37,22 @@ impl<'a> CLIDiary<'a> {
         }
     }
 
-    pub fn add_entry(&mut self, entry: &str, key: Option<DiaryEntryKey>) -> DiaryEntryKey {
-        match self.diary.add_entry(entry, key) {
+    pub fn add_entry(&self, entry: &str, key: Option<DiaryEntryKey>) -> DiaryEntryKey {
+        let tag_index = self.open_index();
+        match self.diary.add_entry(&tag_index, entry, key) {
             Ok(key) => key,
             Err(err) => {
                 eprintln!("Error creating entry: {}", err);
+                process::exit(1)
+            }
+        }
+    }
+
+    fn open_index(&self) -> TagIndex {
+        match self.diary.open_index() {
+            Ok(index) => index,
+            Err(err) => {
+                eprintln!("Error opening tag index: {}", err);
                 process::exit(1)
             }
         }
