@@ -103,6 +103,16 @@ pub fn main() {
                         .takes_value(true),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name(args::tags::SUBCOMMAND)
+                .about("Operate on tags")
+                .arg(
+                    Arg::with_name(args::tags::SEARCH)
+                        .value_name("TAGS")
+                        .help("Tags to search for")
+                        .multiple(true)
+                )
+        )
         .get_matches();
     let mut path = matches
         .value_of(args::opts::PATH)
@@ -120,6 +130,8 @@ pub fn main() {
         show_entry(&diary, &show_matches);
     } else if let Some(add_matches) = matches.subcommand_matches(args::add::SUBCOMMAND) {
         add_entry_with_args(&mut diary, &add_matches);
+    } else if let Some(tags_matches) = matches.subcommand_matches(args::tags::SUBCOMMAND) {
+        tags_with_args(&mut diary, &tags_matches)
     }
 }
 
@@ -288,6 +300,17 @@ enum AddEditor {
     Stdin,
 }
 
+fn tags_with_args(diary: &mut CLIDiary, tags_matches: &clap::ArgMatches) {
+    if let Some(tags_values) = tags_matches.values_of(args::tags::SEARCH) {
+        let tags: Vec<&str> = tags_values.collect();
+        search_tags(diary, &tags)
+    }
+}
+
+fn search_tags(diary: &mut CLIDiary, tags: &[&str]) {
+
+}
+
 mod args {
     pub mod opts {
         pub static NAME: &str = "name";
@@ -312,6 +335,11 @@ mod args {
         pub static DATE: &str = "date";
         pub static NUMBER: &str = "number";
         pub static NUMBER_REVERSE: &str = "number-reverse";
+    }
+
+    pub mod tags {
+        pub static SUBCOMMAND: &str = "tags";
+        pub static SEARCH: &str = "search";
     }
 }
 
