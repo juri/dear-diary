@@ -108,6 +108,8 @@ pub fn main() {
                 .about("Operate on tags")
                 .arg(
                     Arg::with_name(args::tags::SEARCH)
+                        .short("s")
+                        .long("search")
                         .value_name("TAGS")
                         .help("Tags to search for")
                         .multiple(true)
@@ -308,7 +310,11 @@ fn tags_with_args(diary: &CLIDiary, tags_matches: &clap::ArgMatches) {
 }
 
 fn search_tags(diary: &CLIDiary, tags: &[&str]) {
-
+    let keys = diary.search_tags(tags);
+    let entry_list = make_entry_list(&keys, ListOption::Plain, KeyOrdering::LatestFirst);
+    for entry in entry_list {
+        println!("{}", entry);
+    }
 }
 
 mod args {

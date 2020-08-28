@@ -1,4 +1,5 @@
 use crate::DiaryEntryKey;
+use chrono::{DateTime, Utc};
 use rusqlite::{params, Connection};
 use std::fmt;
 use std::fs;
@@ -18,6 +19,7 @@ pub enum TagIndexError {
     DBError(rusqlite::Error),
     BadPathError(PathBuf),
     IoError(io::Error),
+    IndexFormatError(String),
 }
 
 impl fmt::Display for TagIndexError {
@@ -28,6 +30,7 @@ impl fmt::Display for TagIndexError {
                 write!(f, "Bad path {}", p.to_str().unwrap_or("(no path)"))
             }
             TagIndexError::IoError(e) => write!(f, "I/O error: {}", e),
+            TagIndexError::IndexFormatError(s) => write!(f, "Tag index error: {}", s),
         }
     }
 }
@@ -41,6 +44,12 @@ impl From<rusqlite::Error> for TagIndexError {
 impl From<io::Error> for TagIndexError {
     fn from(error: io::Error) -> Self {
         TagIndexError::IoError(error)
+    }
+}
+
+impl From<chrono::format::ParseError> for TagIndexError {
+    fn from(error: chrono::format::ParseError) -> Self {
+        TagIndexError::IndexFormatError(format!("Error parsing entry key from index: {}", error))
     }
 }
 
@@ -90,10 +99,35 @@ impl TagIndex {
         self.conn.execute("COMMIT", params![])?;
         Ok(())
     }
+
+    pub fn search_tags(&self, tags: &[&str]) -> TagIndexResult<Vec<DiaryEntryKey>> {
+        if tags.is_empty() {
+            return Ok(vec![]);
+        }
+        let placeholders = make_placeholders(tags.len());
+        let select = format!("SELECT entry_key FROM tag WHERE tag IN ({})", placeholders);
+        let mut stmt = self.conn.prepare(&select)?;
+        let rows = stmt.query_map(tags, |row| row.get(0))?;
+        let mut keys: Vec<DiaryEntryKey> = Vec::new();
+        for key_result in rows {
+            let key_str: String = key_result?;
+            let key =
+                DateTime::parse_from_str(&key_str, KEY_DB_FORMAT).map(|date| DiaryEntryKey {
+                    date: date.with_timezone(&Utc),
+                })?;
+            keys.push(key);
+        }
+        Ok(keys)
+    }
 }
 
 fn entry_key_to_db_key(key: &DiaryEntryKey) -> String {
     key.date.format(KEY_DB_FORMAT).to_string()
+}
+
+fn make_placeholders(times: usize) -> String {
+    assert_ne!(times, 0);
+    format!("?{}", ", ?".repeat(times - 1))
 }
 
 static KEY_DB_FORMAT: &str = "%Y%m%dT%H%M%z";

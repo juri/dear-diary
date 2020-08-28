@@ -130,6 +130,11 @@ impl<'a> Diary<'a> {
         Ok(DiaryEntryKey { date: entry_dt })
     }
 
+    pub fn search_tags(&self, tag_index: &TagIndex, tags: &[&str]) -> DiaryResult<Vec<DiaryEntryKey>> {
+        let keys = tag_index.search_tags(tags)?;
+        Ok(keys)
+    }
+
     pub fn open_index(&self) -> DiaryResult<TagIndex> {
         let tag_index = TagIndex::new(&self.tree.root)?;
         tag_index.initdb()?;

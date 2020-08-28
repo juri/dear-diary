@@ -48,6 +48,17 @@ impl<'a> CLIDiary<'a> {
         }
     }
 
+    pub fn search_tags(&self, tags: &[&str]) -> Vec<DiaryEntryKey> {
+        let tag_index = self.open_index();
+        match self.diary.search_tags(&tag_index, tags) {
+            Ok(keys) => keys,
+            Err(err) => {
+                eprintln!("Error searching tags: {}", err);
+                process::exit(1)
+            }
+        }
+    }
+
     fn open_index(&self) -> TagIndex {
         match self.diary.open_index() {
             Ok(index) => index,
