@@ -87,16 +87,17 @@ impl TagIndex {
 
     pub fn set_tags(&self, key: &DiaryEntryKey, tags: &[String]) -> TagIndexResult<()> {
         let db_key = entry_key_to_db_key(key);
-        self.conn.execute("BEGIN TRANSACTION", params![])?;
-        self.conn
-            .execute("DELETE FROM tag WHERE entry_key = ?", &[&db_key])?;
-        let mut stmt = self
-            .conn
-            .prepare("INSERT INTO tag (tag, entry_key) VALUES (?, ?)")?;
-        for tag in tags {
-            stmt.execute(&[tag, &db_key])?;
-        }
-        self.conn.execute("COMMIT", params![])?;
+        self.in_transaction(|| {
+            self.conn
+                .execute("DELETE FROM tag WHERE entry_key = ?", &[&db_key])?;
+            let mut stmt = self
+                .conn
+                .prepare("INSERT INTO tag (tag, entry_key) VALUES (?, ?)")?;
+            for tag in tags {
+                stmt.execute(&[tag, &db_key])?;
+            }
+            Ok(())
+        })?;
         Ok(())
     }
 
@@ -118,6 +119,16 @@ impl TagIndex {
             keys.push(key);
         }
         Ok(keys)
+    }
+
+    fn in_transaction<F>(&self, f: F) -> TagIndexResult<()>
+    where
+        F: Fn() -> TagIndexResult<()>,
+    {
+        self.conn.execute("BEGIN TRANSACTION", params![])?;
+        f()?;
+        self.conn.execute("COMMIT", params![])?;
+        Ok(())
     }
 }
 
