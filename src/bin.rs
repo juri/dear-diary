@@ -112,8 +112,14 @@ pub fn main() {
                         .long("search")
                         .value_name("TAGS")
                         .help("Tags to search for")
-                        .multiple(true)
+                        .multiple(true),
                 )
+                .arg(
+                    Arg::with_name(args::tags::REINDEX)
+                        .short("I")
+                        .long("index")
+                        .help("Recreate tag index"),
+                ),
         )
         .get_matches();
     let mut path = matches
@@ -306,6 +312,8 @@ fn tags_with_args(diary: &CLIDiary, tags_matches: &clap::ArgMatches) {
     if let Some(tags_values) = tags_matches.values_of(args::tags::SEARCH) {
         let tags: Vec<&str> = tags_values.collect();
         search_tags(diary, &tags)
+    } else if tags_matches.is_present(args::tags::REINDEX) {
+        reindex(diary)
     }
 }
 
@@ -315,6 +323,10 @@ fn search_tags(diary: &CLIDiary, tags: &[&str]) {
     for entry in entry_list {
         println!("{}", entry);
     }
+}
+
+fn reindex(diary: &CLIDiary) {
+    diary.reindex()
 }
 
 mod args {
@@ -346,6 +358,7 @@ mod args {
     pub mod tags {
         pub static SUBCOMMAND: &str = "tags";
         pub static SEARCH: &str = "search";
+        pub static REINDEX: &str = "reindex";
     }
 }
 

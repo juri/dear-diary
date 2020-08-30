@@ -130,7 +130,11 @@ impl<'a> Diary<'a> {
         Ok(DiaryEntryKey { date: entry_dt })
     }
 
-    pub fn search_tags(&self, tag_index: &TagIndex, tags: &[&str]) -> DiaryResult<Vec<DiaryEntryKey>> {
+    pub fn search_tags(
+        &self,
+        tag_index: &TagIndex,
+        tags: &[&str],
+    ) -> DiaryResult<Vec<DiaryEntryKey>> {
         let keys = tag_index.search_tags(tags)?;
         Ok(keys)
     }
@@ -139,6 +143,21 @@ impl<'a> Diary<'a> {
         let tag_index = TagIndex::new(&self.tree.root)?;
         tag_index.initdb()?;
         Ok(tag_index)
+    }
+
+    pub fn reindex(&self, tag_index: &TagIndex) -> DiaryResult<()> {
+        let entry_dates = self.tree.list()?;
+        let keys = entry_dates.iter().map(|d| DiaryEntryKey { date: *d }); //.collect();
+        let key_tag_results = keys.map(|key| -> DiaryResult<(DiaryEntryKey, Vec<String>)> {
+            let text = self.get_text_for_entry(&key)?;
+            let tags = tagparser::find_tags(&text);
+            Ok((key, tags))
+        });
+        let keys_tags = key_tag_results
+            .into_iter()
+            .collect::<DiaryResult<Vec<(DiaryEntryKey, Vec<String>)>>>()?;
+        tag_index.recreate_index(&keys_tags)?;
+        Ok(())
     }
 
     fn save_tags(&self, tag_index: &TagIndex, key: &DiaryEntryKey, text: &str) -> DiaryResult<()> {

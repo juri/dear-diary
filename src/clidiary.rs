@@ -59,6 +59,17 @@ impl<'a> CLIDiary<'a> {
         }
     }
 
+    pub fn reindex(&self) {
+        let tag_index = self.open_index();
+        match self.diary.reindex(&tag_index) {
+            Ok(_) => (),
+            Err(err) => {
+                eprintln!("Error reindexing: {}", err);
+                process::exit(1)
+            }
+        }
+    }
+
     fn open_index(&self) -> TagIndex {
         match self.diary.open_index() {
             Ok(index) => index,

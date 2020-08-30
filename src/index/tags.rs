@@ -1,6 +1,6 @@
 use crate::DiaryEntryKey;
 use chrono::{DateTime, Utc};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, NO_PARAMS};
 use std::fmt;
 use std::fs;
 use std::io;
@@ -88,17 +88,28 @@ impl TagIndex {
     pub fn set_tags(&self, key: &DiaryEntryKey, tags: &[String]) -> TagIndexResult<()> {
         let db_key = entry_key_to_db_key(key);
         self.in_transaction(|| {
-            self.conn
-                .execute("DELETE FROM tag WHERE entry_key = ?", &[&db_key])?;
-            let mut stmt = self
-                .conn
-                .prepare("INSERT INTO tag (tag, entry_key) VALUES (?, ?)")?;
+            self.conn.execute(DELETE_TAG_STATEMENT, &[&db_key])?;
+            let mut stmt = self.conn.prepare(INSERT_TAG_STATEMENT)?;
             for tag in tags {
                 stmt.execute(&[tag, &db_key])?;
             }
             Ok(())
         })?;
         Ok(())
+    }
+
+    pub fn recreate_index(&self, keys_tags: &[(DiaryEntryKey, Vec<String>)]) -> TagIndexResult<()> {
+        let mut insert_stmt = self.conn.prepare(INSERT_TAG_STATEMENT)?;
+        self.in_transaction(|| {
+            self.conn.execute("DELETE FROM tag", NO_PARAMS)?;
+            for (key, tags) in keys_tags {
+                let db_key = entry_key_to_db_key(key);
+                for tag in tags.iter() {
+                    insert_stmt.execute(&[tag, &db_key])?;
+                }
+            }
+            Ok(())
+        })
     }
 
     pub fn search_tags(&self, tags: &[&str]) -> TagIndexResult<Vec<DiaryEntryKey>> {
@@ -121,9 +132,9 @@ impl TagIndex {
         Ok(keys)
     }
 
-    fn in_transaction<F>(&self, f: F) -> TagIndexResult<()>
+    fn in_transaction<F>(&self, mut f: F) -> TagIndexResult<()>
     where
-        F: Fn() -> TagIndexResult<()>,
+        F: FnMut() -> TagIndexResult<()>,
     {
         self.conn.execute("BEGIN TRANSACTION", params![])?;
         f()?;
@@ -142,3 +153,5 @@ fn make_placeholders(times: usize) -> String {
 }
 
 static KEY_DB_FORMAT: &str = "%Y%m%dT%H%M%z";
+static DELETE_TAG_STATEMENT: &str = "DELETE FROM tag WHERE entry_key = ?";
+static INSERT_TAG_STATEMENT: &str = "INSERT INTO tag (tag, entry_key) VALUES (?, ?)";
