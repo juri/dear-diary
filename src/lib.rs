@@ -1,8 +1,10 @@
+mod diaryentrykey;
 pub mod filerepo;
 mod index;
 pub mod model;
 mod tagparser;
 
+pub use diaryentrykey::DiaryEntryKey;
 pub use index::tags::TagIndex;
 use std::error::Error;
 use std::fmt;
@@ -51,27 +53,6 @@ impl fmt::Display for DiaryError {
 impl Error for DiaryError {}
 
 type DiaryResult<T> = Result<T, DiaryError>;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DiaryEntryKey {
-    date: DateTime<Utc>,
-}
-
-impl DiaryEntryKey {
-    pub fn parse_from_string(s: &str) -> Option<DiaryEntryKey> {
-        DateTime::parse_from_str(s, DEFAULT_KEY_FORMAT)
-            .map(|date| DiaryEntryKey {
-                date: date.with_timezone(&Utc),
-            })
-            .ok()
-    }
-}
-
-impl fmt::Display for DiaryEntryKey {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.date.format(DEFAULT_KEY_FORMAT).to_string())
-    }
-}
 
 impl<'a> Diary<'a> {
     pub fn open(path: &Path) -> Result<Diary<'a>, DiaryError> {
@@ -166,5 +147,3 @@ impl<'a> Diary<'a> {
         Ok(())
     }
 }
-
-static DEFAULT_KEY_FORMAT: &str = "%Y-%m-%d %H:%M %z";
