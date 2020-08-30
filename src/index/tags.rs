@@ -117,7 +117,10 @@ impl TagIndex {
             return Ok(vec![]);
         }
         let placeholders = make_placeholders(tags.len());
-        let select = format!("SELECT entry_key FROM tag WHERE tag IN ({})", placeholders);
+        let select = format!(
+            "SELECT entry_key FROM tag WHERE tag IN ({}) ORDER BY entry_key",
+            placeholders
+        );
         let mut stmt = self.conn.prepare(&select)?;
         let rows = stmt.query_map(tags, |row| row.get(0))?;
         let mut keys: Vec<DiaryEntryKey> = Vec::new();
