@@ -24,6 +24,19 @@ Running `ddiary list` produces a list of diary entries, one entry per line. Each
 
 The subcommand `show`, i.e. `ddiary show`, will display one entry. You can select the entry with a date, as displayed in `ddiary list`, or with a number, as shown in `ddiary show -e` or `ddiary show -E`. Without any extra parameters `show` will display the latest entry.
 
+### Tagging diary entries
+
+Diary entries can contain tags. A single-word tag is a hash mark (`#`) followed by one
+or more letters or digits. Multiword tags are surrounded by `#(` and `)#`, and you 
+can use any number of hash marks as long as the start and end markers have the same number.
+
+Example:
+
+> A #diary #entry with ##(many tags)##
+
+You can search tags with `ddiary tags -s tag1 tag2`. If your index goes bad, `ddiary tags -I`
+will recreate it.
+
 ## License
 
 Licensed under either of
