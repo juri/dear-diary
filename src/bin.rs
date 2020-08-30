@@ -103,11 +103,29 @@ pub fn main() {
                         .takes_value(true),
                 ),
         )
+        .subcommand(
+            SubCommand::with_name(args::tags::SUBCOMMAND)
+                .about("Operate on tags")
+                .arg(
+                    Arg::with_name(args::tags::SEARCH)
+                        .short("s")
+                        .long("search")
+                        .value_name("TAGS")
+                        .help("Tags to search for")
+                        .multiple(true),
+                )
+                .arg(
+                    Arg::with_name(args::tags::REINDEX)
+                        .short("I")
+                        .long("index")
+                        .help("Recreate tag index"),
+                ),
+        )
         .get_matches();
     let mut path = matches
         .value_of(args::opts::PATH)
         .map(PathBuf::from)
-        .or_else(|| diarydir::default_dir())
+        .or_else(diarydir::default_dir)
         .unwrap_or_else(|| {
             eprintln!("Couldn't determine diary root directory");
             process::exit(1)
@@ -120,6 +138,8 @@ pub fn main() {
         show_entry(&diary, &show_matches);
     } else if let Some(add_matches) = matches.subcommand_matches(args::add::SUBCOMMAND) {
         add_entry_with_args(&diary, &add_matches);
+    } else if let Some(tags_matches) = matches.subcommand_matches(args::tags::SUBCOMMAND) {
+        tags_with_args(&diary, &tags_matches)
     }
 }
 
@@ -159,7 +179,7 @@ enum ListOption {
 }
 
 fn make_entry_list(
-    keys: &Vec<DiaryEntryKey>,
+    keys: &[DiaryEntryKey],
     option: ListOption,
     ordering: KeyOrdering,
 ) -> Vec<String> {
@@ -188,7 +208,7 @@ fn make_entry_list(
                 })
                 .collect()
         }
-        ListOption::Plain => keys.iter().map(|k| format!("{}", k.to_string())).collect(),
+        ListOption::Plain => keys.iter().map(|k| k.to_string()).collect(),
     };
     match ordering {
         KeyOrdering::EarliestFirst => entries,
@@ -213,7 +233,7 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
     if let Some(date_param) = matches.value_of(args::show::DATE) {
         diary.show_entry(&parse_date_param(date_param));
     } else if let Some(ns) = matches.value_of(args::show::NUMBER) {
-        if let Some(number) = usize::from_str_radix(ns, 10).ok() {
+        if let Ok(number) = usize::from_str_radix(ns, 10) {
             let keys = diary.list_keys();
             check_entry_number(number, &keys);
             let key = &keys[number - 1];
@@ -223,7 +243,7 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
             process::exit(1);
         }
     } else if let Some(ns) = matches.value_of(args::show::NUMBER_REVERSE) {
-        if let Some(number) = usize::from_str_radix(ns, 10).ok() {
+        if let Ok(number) = usize::from_str_radix(ns, 10) {
             let keys = diary.list_keys();
             check_entry_number(number, &keys);
             let key = &keys[keys.len() - number];
@@ -249,7 +269,7 @@ fn parse_date_param(s: &str) -> DiaryEntryKey {
     }
 }
 
-fn check_entry_number(number: usize, keys: &Vec<DiaryEntryKey>) {
+fn check_entry_number(number: usize, keys: &[DiaryEntryKey]) {
     if number > keys.len() {
         eprintln!("Invalid entry number {}", number);
         process::exit(1);
@@ -263,18 +283,17 @@ fn add_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
         AddEditor::Environment
     };
     let key = matches.value_of(args::add::DATE).map(parse_date_param);
-    add_entry(diary, editor, key.as_ref())
+    add_entry(diary, editor, key)
 }
 
-fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<&DiaryEntryKey>) {
+fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<DiaryEntryKey>) {
     let entry = match editor {
         AddEditor::Stdin => entryinput::read_from_stdin(),
         AddEditor::Environment => entryinput::read_entry(),
     };
     match entry {
-        Ok(e) if e.len() > 0 => {
+        Ok(e) if !e.is_empty() => {
             println!("Created entry with key {:?}", diary.add_entry(&e, key));
-            ()
         }
         Ok(_) => (),
         Err(e) => {
@@ -287,6 +306,27 @@ fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<&DiaryEntryKey>) {
 enum AddEditor {
     Environment,
     Stdin,
+}
+
+fn tags_with_args(diary: &CLIDiary, tags_matches: &clap::ArgMatches) {
+    if let Some(tags_values) = tags_matches.values_of(args::tags::SEARCH) {
+        let tags: Vec<&str> = tags_values.collect();
+        search_tags(diary, &tags)
+    } else if tags_matches.is_present(args::tags::REINDEX) {
+        reindex(diary)
+    }
+}
+
+fn search_tags(diary: &CLIDiary, tags: &[&str]) {
+    let keys = diary.search_tags(tags);
+    let entry_list = make_entry_list(&keys, ListOption::Plain, KeyOrdering::LatestFirst);
+    for entry in entry_list {
+        println!("{}", entry);
+    }
+}
+
+fn reindex(diary: &CLIDiary) {
+    diary.reindex()
 }
 
 mod args {
@@ -313,6 +353,12 @@ mod args {
         pub static DATE: &str = "date";
         pub static NUMBER: &str = "number";
         pub static NUMBER_REVERSE: &str = "number-reverse";
+    }
+
+    pub mod tags {
+        pub static SUBCOMMAND: &str = "tags";
+        pub static SEARCH: &str = "search";
+        pub static REINDEX: &str = "reindex";
     }
 }
 

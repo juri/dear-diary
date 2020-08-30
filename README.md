@@ -12,7 +12,9 @@ See `ddiary --help` for a list of all command line options.
 
 ### Adding a diary entry
 
-To add a diary entry, run `ddiary` without any extra parameters (other than possibly `--name` or `--path`, see above.) It will try to find a suitable editor to use in the `VISUAL` or `EDITOR` environment variables and if both are undefined, it will try to read the new entry from the standard input.
+To add a diary entry, run `ddiary` without any extra parameters (other than possibly `--name` or `--path`, see above), or use the `add` subcommand with `ddiary add`. It will try to find a suitable editor to use in the `VISUAL` or `EDITOR` environment variables and if both are undefined, it will try to read the new entry from the standard input.
+
+You can force standard input with `ddiary add --stdin`, and you can override the current date with the `--date` option: `ddiary add --date "2020-07-01 10:00 +0000"`.
 
 ### Listing diary entries
 
@@ -21,6 +23,19 @@ Running `ddiary list` produces a list of diary entries, one entry per line. Each
 ### Displaying a diary entry
 
 The subcommand `show`, i.e. `ddiary show`, will display one entry. You can select the entry with a date, as displayed in `ddiary list`, or with a number, as shown in `ddiary show -e` or `ddiary show -E`. Without any extra parameters `show` will display the latest entry.
+
+### Tagging diary entries
+
+Diary entries can contain tags. A single-word tag is a hash mark (`#`) followed by one
+or more letters or digits. Multiword tags are surrounded by `#(` and `)#`, and you 
+can use any number of hash marks as long as the start and end markers have the same number.
+
+Example:
+
+> A #diary #entry with ##(many tags)##
+
+You can search tags with `ddiary tags -s tag1 tag2`. If your index goes bad, `ddiary tags -I`
+will recreate it.
 
 ## License
 

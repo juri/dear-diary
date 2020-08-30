@@ -9,7 +9,7 @@ use chrono::prelude::*;
 
 #[derive(Debug)]
 pub struct Tree {
-    root: PathBuf,
+    pub root: PathBuf,
 }
 
 pub type FileRepoResult<T> = Result<T, FileRepoError>;
@@ -134,7 +134,7 @@ fn collect_dates(dir: &Path) -> FileRepoResult<Vec<DateTime<Utc>>> {
 
 fn collect_files(dir: &Path) -> FileRepoResult<Vec<String>> {
     let mut files: Vec<String> = Vec::new();
-    let visitor = &mut |fp: &Path| -> () {
+    let visitor = &mut |fp: &Path| {
         let parent1 = match fp.parent() {
             Some(p) => p,
             None => return,

@@ -1,6 +1,9 @@
 pub mod filerepo;
+mod index;
 pub mod model;
+mod tagparser;
 
+pub use index::tags::TagIndex;
 use std::error::Error;
 use std::fmt;
 use std::path::Path;
@@ -8,8 +11,8 @@ use std::path::Path;
 use chrono::{DateTime, Utc};
 
 pub struct Diary<'a> {
-    tree: filerepo::tree::Tree,
     clock: Box<dyn Fn() -> DateTime<Utc> + 'a>,
+    tree: filerepo::tree::Tree,
 }
 
 impl fmt::Debug for Diary<'_> {
@@ -21,6 +24,7 @@ impl fmt::Debug for Diary<'_> {
 #[derive(Debug)]
 pub enum DiaryError {
     FileRepoError(filerepo::tree::FileRepoError),
+    TagIndexError(index::tags::TagIndexError),
 }
 
 impl From<filerepo::tree::FileRepoError> for DiaryError {
@@ -29,10 +33,17 @@ impl From<filerepo::tree::FileRepoError> for DiaryError {
     }
 }
 
+impl From<index::tags::TagIndexError> for DiaryError {
+    fn from(error: index::tags::TagIndexError) -> DiaryError {
+        DiaryError::TagIndexError(error)
+    }
+}
+
 impl fmt::Display for DiaryError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             DiaryError::FileRepoError(e) => write!(f, "File repository error: {}", e),
+            DiaryError::TagIndexError(e) => write!(f, "Tag index error: {}", e),
         }
     }
 }
@@ -41,7 +52,7 @@ impl Error for DiaryError {}
 
 type DiaryResult<T> = Result<T, DiaryError>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiaryEntryKey {
     date: DateTime<Utc>,
 }
@@ -54,9 +65,11 @@ impl DiaryEntryKey {
             })
             .ok()
     }
+}
 
-    pub fn to_string(&self) -> String {
-        self.date.format(DEFAULT_KEY_FORMAT).to_string()
+impl fmt::Display for DiaryEntryKey {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.date.format(DEFAULT_KEY_FORMAT).to_string())
     }
 }
 
@@ -72,8 +85,8 @@ impl<'a> Diary<'a> {
     {
         let tree = filerepo::tree::Tree::new(&path)?;
         let diary = Diary {
-            tree,
             clock: Box::new(clock),
+            tree,
         };
         Ok(diary)
     }
@@ -95,10 +108,15 @@ impl<'a> Diary<'a> {
 
     pub fn add_entry(
         &self,
+        tag_index: &TagIndex,
         content: &str,
-        key: Option<&DiaryEntryKey>,
+        key: Option<DiaryEntryKey>,
     ) -> DiaryResult<DiaryEntryKey> {
-        let entry_dt = key.map(|k| k.date).unwrap_or_else(|| (self.clock)());
+        let key = key.unwrap_or_else(|| DiaryEntryKey {
+            date: (self.clock)(),
+        });
+        let entry_dt = key.date;
+        self.save_tags(tag_index, &key, content)?;
         match self.tree.get_text(&entry_dt) {
             Ok(old_text) => {
                 let full_text = format!("{}\n\n{}\n", old_text.trim_end(), content.trim_end());
@@ -110,6 +128,42 @@ impl<'a> Diary<'a> {
             }
         }
         Ok(DiaryEntryKey { date: entry_dt })
+    }
+
+    pub fn search_tags(
+        &self,
+        tag_index: &TagIndex,
+        tags: &[&str],
+    ) -> DiaryResult<Vec<DiaryEntryKey>> {
+        let keys = tag_index.search_tags(tags)?;
+        Ok(keys)
+    }
+
+    pub fn open_index(&self) -> DiaryResult<TagIndex> {
+        let tag_index = TagIndex::new(&self.tree.root)?;
+        tag_index.initdb()?;
+        Ok(tag_index)
+    }
+
+    pub fn reindex(&self, tag_index: &TagIndex) -> DiaryResult<()> {
+        let entry_dates = self.tree.list()?;
+        let keys = entry_dates.iter().map(|d| DiaryEntryKey { date: *d }); //.collect();
+        let key_tag_results = keys.map(|key| -> DiaryResult<(DiaryEntryKey, Vec<String>)> {
+            let text = self.get_text_for_entry(&key)?;
+            let tags = tagparser::find_tags(&text);
+            Ok((key, tags))
+        });
+        let keys_tags = key_tag_results
+            .into_iter()
+            .collect::<DiaryResult<Vec<(DiaryEntryKey, Vec<String>)>>>()?;
+        tag_index.recreate_index(&keys_tags)?;
+        Ok(())
+    }
+
+    fn save_tags(&self, tag_index: &TagIndex, key: &DiaryEntryKey, text: &str) -> DiaryResult<()> {
+        let tags = tagparser::find_tags(text);
+        tag_index.set_tags(key, &tags)?;
+        Ok(())
     }
 }
 
