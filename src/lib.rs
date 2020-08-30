@@ -162,7 +162,6 @@ impl<'a> Diary<'a> {
 
     fn save_tags(&self, tag_index: &TagIndex, key: &DiaryEntryKey, text: &str) -> DiaryResult<()> {
         let tags = tagparser::find_tags(text);
-        println!("tags found: {:?}", tags);
         tag_index.set_tags(key, &tags)?;
         Ok(())
     }
