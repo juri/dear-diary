@@ -52,7 +52,7 @@ impl Error for DiaryError {}
 
 type DiaryResult<T> = Result<T, DiaryError>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DiaryEntryKey {
     date: DateTime<Utc>,
 }
