@@ -1,6 +1,6 @@
 mod diary;
 mod diaryentrykey;
-pub mod filerepo;
+mod filerepo;
 mod index;
 mod tagparser;
 
