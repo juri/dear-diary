@@ -1,5 +1,5 @@
 use chrono::{TimeZone, Utc};
-use diary_core::{Diary, DiaryEntryKey};
+use diary_core::{Diary, DiaryEntryKey, MatchingDateBehavior};
 use std::path::PathBuf;
 use tempfile::tempdir;
 
@@ -12,10 +12,20 @@ fn test_tags_store() {
     let key1 = DiaryEntryKey::parse_from_string("2020-08-30 13:37 +03:00").unwrap();
     let key2 = DiaryEntryKey::parse_from_string("2020-08-31 13:37 +03:00").unwrap();
     let rkey1 = diary
-        .add_entry(&index, "#(hello world)# #with #tags", Some(key1.clone()))
+        .add_entry(
+            &index,
+            "#(hello world)# #with #tags",
+            Some(key1.clone()),
+            MatchingDateBehavior::Append,
+        )
         .unwrap();
     let rkey2 = diary
-        .add_entry(&index, "another note, #more #tags", Some(key2.clone()))
+        .add_entry(
+            &index,
+            "another note, #more #tags",
+            Some(key2.clone()),
+            MatchingDateBehavior::Append,
+        )
         .unwrap();
     assert_eq!(key1, rkey1);
     assert_eq!(key2, rkey2);
@@ -36,10 +46,20 @@ fn test_tags_store_reindex() {
     let key1 = DiaryEntryKey::parse_from_string("2020-08-30 13:37 +03:00").unwrap();
     let key2 = DiaryEntryKey::parse_from_string("2020-08-31 13:37 +03:00").unwrap();
     let rkey1 = diary
-        .add_entry(&index, "#(hello world)# #with #tags", Some(key1.clone()))
+        .add_entry(
+            &index,
+            "#(hello world)# #with #tags",
+            Some(key1.clone()),
+            MatchingDateBehavior::Append,
+        )
         .unwrap();
     let rkey2 = diary
-        .add_entry(&index, "another note, #more #tags", Some(key2.clone()))
+        .add_entry(
+            &index,
+            "another note, #more #tags",
+            Some(key2.clone()),
+            MatchingDateBehavior::Append,
+        )
         .unwrap();
     assert_eq!(key1, rkey1);
     assert_eq!(key2, rkey2);

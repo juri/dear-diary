@@ -51,6 +51,26 @@ pub fn main() {
                 ),
         )
         .subcommand(
+            SubCommand::with_name(args::edit::SUBCOMMAND)
+                .about("Edit or replace a diary entry")
+                .arg(
+                    Arg::with_name(args::edit::STDIN)
+                        .short("s")
+                        .long("stdin")
+                        .help("Read entry from stdin")
+                        .takes_value(false),
+                )
+                .arg(
+                    Arg::with_name(args::edit::DATE)
+                        .short("d")
+                        .long("date")
+                        .value_name("DATE")
+                        .help("Date for the entry to edit or replace")
+                        .required(true)
+                        .takes_value(true),
+                ),
+        )
+        .subcommand(
             SubCommand::with_name(args::list::SUBCOMMAND)
                 .about("Lists entries")
                 .arg(
@@ -138,6 +158,8 @@ pub fn main() {
         show_entry(&diary, &show_matches);
     } else if let Some(add_matches) = matches.subcommand_matches(args::add::SUBCOMMAND) {
         add_entry_with_args(&diary, &add_matches);
+    } else if let Some(edit_matches) = matches.subcommand_matches(args::edit::SUBCOMMAND) {
+        edit_entry_with_args(&diary, &edit_matches);
     } else if let Some(tags_matches) = matches.subcommand_matches(args::tags::SUBCOMMAND) {
         tags_with_args(&diary, &tags_matches)
     }
@@ -303,6 +325,39 @@ fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<DiaryEntryKey>) {
     }
 }
 
+fn edit_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
+    let editor = if matches.is_present(args::edit::STDIN) {
+        AddEditor::Stdin
+    } else {
+        AddEditor::Environment
+    };
+    let key = match matches.value_of(args::add::DATE).map(parse_date_param) {
+        Some(k) => k,
+        None => {
+            eprintln!("Required date parameter not found");
+            process::exit(1)
+        }
+    };
+    edit_entry(diary, editor, key)
+}
+
+fn edit_entry(diary: &CLIDiary, editor: AddEditor, key: DiaryEntryKey) {
+    let entry = match editor {
+        AddEditor::Stdin => entryinput::read_from_stdin(),
+        AddEditor::Environment => entryinput::read_entry(),
+    };
+    match entry {
+        Ok(e) if !e.is_empty() => {
+            diary.replace_entry(&e, key);
+        }
+        Ok(_) => (),
+        Err(e) => {
+            eprintln!("Failed to read entry: {}", e);
+            process::exit(1)
+        }
+    }
+}
+
 enum AddEditor {
     Environment,
     Stdin,
@@ -337,6 +392,12 @@ mod args {
 
     pub mod add {
         pub static SUBCOMMAND: &str = "add";
+        pub static STDIN: &str = "stdin";
+        pub static DATE: &str = "date";
+    }
+
+    pub mod edit {
+        pub static SUBCOMMAND: &str = "edit";
         pub static STDIN: &str = "stdin";
         pub static DATE: &str = "date";
     }

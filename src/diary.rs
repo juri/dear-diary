@@ -87,21 +87,27 @@ impl<'a> Diary<'a> {
         tag_index: &TagIndex,
         content: &str,
         key: Option<DiaryEntryKey>,
+        matching_date_behavior: MatchingDateBehavior,
     ) -> DiaryResult<DiaryEntryKey> {
         let key = key.unwrap_or_else(|| DiaryEntryKey {
             date: (self.clock)(),
         });
         let entry_dt = key.date;
         self.save_tags(tag_index, &key, content)?;
-        match self.tree.get_text(&entry_dt) {
-            Ok(old_text) => {
-                let full_text = format!("{}\n\n{}\n", old_text.trim_end(), content.trim_end());
-                self.tree.add_entry(&entry_dt, &full_text)?;
+        let formatted_content = format!("{}\n", content.trim_end());
+        match matching_date_behavior {
+            MatchingDateBehavior::Overwrite => {
+                self.tree.add_entry(&entry_dt, &formatted_content)?
             }
-            Err(_) => {
-                self.tree
-                    .add_entry(&entry_dt, &(format!("{}\n", content.trim_end())))?;
-            }
+            MatchingDateBehavior::Append => match self.tree.get_text(&entry_dt) {
+                Ok(old_text) => {
+                    let full_text = format!("{}\n\n{}", old_text.trim_end(), &formatted_content);
+                    self.tree.add_entry(&entry_dt, &full_text)?;
+                }
+                Err(_) => {
+                    self.tree.add_entry(&entry_dt, &formatted_content)?;
+                }
+            },
         }
         Ok(DiaryEntryKey { date: entry_dt })
     }
@@ -141,4 +147,9 @@ impl<'a> Diary<'a> {
         tag_index.set_tags(key, &tags)?;
         Ok(())
     }
+}
+
+pub enum MatchingDateBehavior {
+    Overwrite,
+    Append,
 }
