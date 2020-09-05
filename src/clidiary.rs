@@ -1,4 +1,4 @@
-use diary_core::{Diary, DiaryEntryKey, TagIndex};
+use diary_core::{Diary, DiaryEntryKey, MatchingDateBehavior, TagIndex};
 use std::path::Path;
 use std::process;
 
@@ -18,8 +18,12 @@ impl<'a> CLIDiary<'a> {
     }
 
     pub fn show_entry(&self, key: &DiaryEntryKey) {
+        println!("{}", self.text_for_entry(key))
+    }
+
+    pub fn text_for_entry(&self, key: &DiaryEntryKey) -> String {
         match self.diary.get_text_for_entry(key) {
-            Ok(text) => println!("{}", text),
+            Ok(text) => text,
             Err(err) => {
                 eprintln!("Error retrieving diary entry: {}", err);
                 process::exit(1)
@@ -39,10 +43,29 @@ impl<'a> CLIDiary<'a> {
 
     pub fn add_entry(&self, entry: &str, key: Option<DiaryEntryKey>) -> DiaryEntryKey {
         let tag_index = self.open_index();
-        match self.diary.add_entry(&tag_index, entry, key) {
+        match self
+            .diary
+            .add_entry(&tag_index, entry, key, MatchingDateBehavior::Append)
+        {
             Ok(key) => key,
             Err(err) => {
                 eprintln!("Error creating entry: {}", err);
+                process::exit(1)
+            }
+        }
+    }
+
+    pub fn replace_entry(&self, entry: &str, key: DiaryEntryKey) -> DiaryEntryKey {
+        let tag_index = self.open_index();
+        match self.diary.add_entry(
+            &tag_index,
+            entry,
+            Some(key),
+            MatchingDateBehavior::Overwrite,
+        ) {
+            Ok(key) => key,
+            Err(err) => {
+                eprintln!("Error replacing entry: {}", err);
                 process::exit(1)
             }
         }
