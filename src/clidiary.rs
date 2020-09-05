@@ -18,8 +18,12 @@ impl<'a> CLIDiary<'a> {
     }
 
     pub fn show_entry(&self, key: &DiaryEntryKey) {
+        println!("{}", self.text_for_entry(key))
+    }
+
+    pub fn text_for_entry(&self, key: &DiaryEntryKey) -> String {
         match self.diary.get_text_for_entry(key) {
-            Ok(text) => println!("{}", text),
+            Ok(text) => text,
             Err(err) => {
                 eprintln!("Error retrieving diary entry: {}", err);
                 process::exit(1)
