@@ -16,9 +16,9 @@ A diary entry is free-form text, with optional tags (`#word`, `#(multi-word phra
 
 ### Adding a diary entry
 
-To add a diary entry, run `ddiary` without any extra parameters (other than possibly `--name` or `--path`, see above), or use the `add` subcommand with `ddiary add`. It will try to find a suitable editor to use in the `VISUAL` or `EDITOR` environment variables and if both are undefined, it will try to read the new entry from the standard input.
+To add a diary entry, run `ddiary` without any extra parameters (other than possibly `--name` or `--path`, see above), or use the `add` subcommand with `ddiary add`. It will try to find a suitable editor to use in the `VISUAL` or `EDITOR` environment variables. If both are undefined, it will fail, unless you call it with the `--stdin` option in which case it'll read from standard input.
 
-You can force standard input with `ddiary add --stdin`, and you can override the current date with the `--date` option: `ddiary add --date "2020-07-01 10:00 +0000"`.
+You can override the current date with the `--date` option: `ddiary add --date "2020-07-01 10:00 +0000"`.
 
 If you add a diary entry with a date that already exist, it'll be appended to the end of the existing entry.
 
