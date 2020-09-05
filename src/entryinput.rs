@@ -3,28 +3,18 @@ extern crate tempfile;
 use std::env;
 use std::fs;
 use std::io::{self, Read};
-use std::process::Command;
-
-enum Editor {
-    External(String),
-    StandardInput,
-}
+use std::process::{self, Command};
 
 pub fn read_entry() -> io::Result<String> {
-    match editor_from_env() {
-        Editor::External(name) => open_external_editor(&name),
-        Editor::StandardInput => read_from_stdin(),
-    }
+    open_external_editor(&(name_from_env()))
 }
 
-fn name_from_env() -> Option<String> {
+fn name_from_env() -> String {
     env::var("VISUAL").ok().or_else(|| env::var("EDITOR").ok())
-}
-
-fn editor_from_env() -> Editor {
-    name_from_env()
-        .map(Editor::External)
-        .unwrap_or(Editor::StandardInput)
+        .unwrap_or_else(|| {
+            eprintln!("Couldn't find VISUAL or EDITOR in environment");
+            process::exit(1)
+        })
 }
 
 fn open_external_editor(editor: &str) -> io::Result<String> {
