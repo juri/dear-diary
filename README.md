@@ -22,6 +22,10 @@ You can override the current date with the `--date` option: `ddiary add --date "
 
 If you add a diary entry with a date that already exist, it'll be appended to the end of the existing entry.
 
+### Editing an existing diary entry
+
+To edit a diary entry, run `ddiary edit --date "2020-07-01 10:00 +00:00"`, assuming you have an existing entry with that date. You can specify `--stdin` with `edit`, too, in which case the old text will be overwritten.
+
 ### Listing diary entries
 
 Running `ddiary list` produces a list of diary entries, one entry per line. Each diary entry is identified by a date and time (unique identification happens with the precision of one minute.) You can ask `list` to attach numbers to each entry, and you can ask them to be listed in reverse order instead of earliest one first.
