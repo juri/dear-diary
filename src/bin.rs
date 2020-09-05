@@ -311,7 +311,7 @@ fn add_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
 fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<DiaryEntryKey>) {
     let entry = match editor {
         AddEditor::Stdin => entryinput::read_from_stdin(),
-        AddEditor::Environment => entryinput::read_entry(),
+        AddEditor::Environment => entryinput::read_entry(&""),
     };
     match entry {
         Ok(e) if !e.is_empty() => {
@@ -344,7 +344,10 @@ fn edit_entry_with_args(diary: &CLIDiary, matches: &clap::ArgMatches) {
 fn edit_entry(diary: &CLIDiary, editor: AddEditor, key: DiaryEntryKey) {
     let entry = match editor {
         AddEditor::Stdin => entryinput::read_from_stdin(),
-        AddEditor::Environment => entryinput::read_entry(),
+        AddEditor::Environment => {
+            let old_text = diary.text_for_entry(&key);
+            entryinput::read_entry(&old_text)
+        }
     };
     match entry {
         Ok(e) if !e.is_empty() => {
