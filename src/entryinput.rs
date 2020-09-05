@@ -6,7 +6,7 @@ use std::io::Write;
 use std::io::{self, Read};
 use std::process::{self, Command};
 
-pub fn read_entry(text: &str) -> io::Result<String> {
+pub fn read_from_editor(text: &str) -> io::Result<String> {
     open_external_editor(&(name_from_env()), text)
 }
 
