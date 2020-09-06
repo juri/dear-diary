@@ -314,7 +314,7 @@ fn add_entry(diary: &CLIDiary, editor: AddEditor, key: Option<DiaryEntryKey>) {
         AddEditor::Environment => entryinput::read_from_editor(&""),
     };
     match entry {
-        Ok(e) if !e.is_empty() => {
+        Ok(e) if !e.trim().is_empty() => {
             println!("Created entry with key {:?}", diary.add_entry(&e, key));
         }
         Ok(_) => (),
