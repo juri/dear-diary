@@ -301,6 +301,13 @@ fn parse_local_date(s: &str) -> Option<DiaryEntryKey> {
 }
 
 fn parse_local_datetime(s: &str) -> Option<DateTime<Local>> {
+    parse_local_datetime_with_clock(s, &Local::now)
+}
+
+fn parse_local_datetime_with_clock<C>(s: &str, clock: C) -> Option<DateTime<Local>>
+where
+    C: Fn() -> DateTime<Local>,
+{
     Local
         .datetime_from_str(s, "%Y-%m-%d %H:%M")
         .ok()
