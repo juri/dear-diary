@@ -4,6 +4,7 @@ mod clidiary;
 mod diarydir;
 mod entryinput;
 
+use chrono::prelude::*;
 use clap::{App, Arg, SubCommand};
 use clidiary::CLIDiary;
 use diary_core::DiaryEntryKey;
@@ -285,10 +286,30 @@ fn show_entry(diary: &CLIDiary, matches: &clap::ArgMatches) {
 fn parse_date_param(s: &str) -> DiaryEntryKey {
     if let Some(key) = DiaryEntryKey::parse_from_string(s) {
         key
+    } else if let Some(key) = parse_local_date(s) {
+        key
     } else {
         eprintln!("Failed to parse date {}", s);
         process::exit(1);
     }
+}
+
+fn parse_local_date(s: &str) -> Option<DiaryEntryKey> {
+    parse_local_datetime(s).map(|ldt| DiaryEntryKey {
+        date: ldt.with_timezone(&Utc),
+    })
+}
+
+fn parse_local_datetime(s: &str) -> Option<DateTime<Local>> {
+    Local
+        .datetime_from_str(s, "%Y-%m-%d %H:%M")
+        .ok()
+        .or_else(|| {
+            NaiveDate::parse_from_str(s, "%Y-%m-%d")
+                .ok()
+                .map(|nd| nd.and_hms(12, 0, 0))
+                .and_then(|ndt| Local.from_local_datetime(&ndt).latest())
+        })
 }
 
 fn check_entry_number(number: usize, keys: &[DiaryEntryKey]) {
