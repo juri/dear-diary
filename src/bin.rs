@@ -317,6 +317,12 @@ where
                 .map(|nd| nd.and_hms(12, 0, 0))
                 .and_then(|ndt| Local.from_local_datetime(&ndt).latest())
         })
+        .or_else(|| {
+            NaiveTime::parse_from_str(s, "%H:%M")
+                .ok()
+                .map(|nt| clock().date().naive_local().and_time(nt))
+                .and_then(|ndt| Local.from_local_datetime(&ndt).latest())
+        })
 }
 
 fn check_entry_number(number: usize, keys: &[DiaryEntryKey]) {
