@@ -318,12 +318,17 @@ where
                 .and_then(|ndt| Local.from_local_datetime(&ndt).latest())
         })
         .or_else(|| {
-            NaiveTime::parse_from_str(s, "%H:%M")
-                .ok()
-                .map(|nt| clock().date().naive_local().and_time(nt))
-                .and_then(|ndt| Local.from_local_datetime(&ndt).latest())
+            TIME_FORMATS.iter().find_map(|fmt| {
+                NaiveTime::parse_from_str(s, fmt)
+                    .ok()
+                    .map(|nt| clock().date().naive_local().and_time(nt))
+                    .and_then(|ndt| Local.from_local_datetime(&ndt).latest())
+            })
         })
 }
+
+const TIME_FORMATS: &'static [&'static str] =
+    &["%l:%M%P", "%I:%M%P", "%l:%M%p", "%I:%M%p", "%H:%M", "%H%M"];
 
 fn check_entry_number(number: usize, keys: &[DiaryEntryKey]) {
     if number > keys.len() {
