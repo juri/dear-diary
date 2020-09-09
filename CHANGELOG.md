@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Support for more date formats: no-spaces 2020-09-21T12:34+1000, date-only 2020-09-21, time-only 13:37, 1337, 1:23am, 02:45PM
+- Support for more date formats: no-spaces 2020-09-21T12:34+1000, local timezone 2020-09-21 13:37, 2020-09-21T13:37, date-only 2020-09-21, time-only 13:37, 1337, 1:23am, 02:45PM
 - Edit entries with `diary edit`
 - Index tags (spelled #word or #(many words)#), allow search with them
 - Take diary path and name as a parameter, construct full path from them

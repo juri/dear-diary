@@ -53,7 +53,8 @@ Command line parameters that take dates allow a variety of formats:
 
 - 2020-09-21 13:37 +1000
 - 2020-09-21T1337+1000
-- 2020-09-21
+- 2020-09-21 13:37
+- 2020-09-21T13:37
 - 13:37
 - 1337
 - 1:37am
