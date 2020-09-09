@@ -308,9 +308,9 @@ fn parse_local_datetime_with_clock<C>(s: &str, clock: C) -> Option<DateTime<Loca
 where
     C: Fn() -> DateTime<Local>,
 {
-    Local
-        .datetime_from_str(s, "%Y-%m-%d %H:%M")
-        .ok()
+    DATETIME_FORMATS
+        .iter()
+        .find_map(|fmt| Local.datetime_from_str(s, fmt).ok())
         .or_else(|| {
             NaiveDate::parse_from_str(s, "%Y-%m-%d")
                 .ok()
@@ -326,6 +326,8 @@ where
             })
         })
 }
+
+const DATETIME_FORMATS: &'static [&'static str] = &["%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M"];
 
 const TIME_FORMATS: &'static [&'static str] =
     &["%l:%M%P", "%I:%M%P", "%l:%M%p", "%I:%M%p", "%H:%M", "%H%M"];
