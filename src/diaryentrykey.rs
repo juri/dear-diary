@@ -9,6 +9,7 @@ pub struct DiaryEntryKey {
 impl DiaryEntryKey {
     pub fn parse_from_string(s: &str) -> Option<DiaryEntryKey> {
         DateTime::parse_from_str(s, DEFAULT_KEY_FORMAT)
+            .or_else(|_| DateTime::parse_from_str(s, DEFAULT_NO_SPACES_KEY_FORMAT))
             .map(|date| DiaryEntryKey {
                 date: date.with_timezone(&Utc),
             })
@@ -23,3 +24,4 @@ impl fmt::Display for DiaryEntryKey {
 }
 
 static DEFAULT_KEY_FORMAT: &str = "%Y-%m-%d %H:%M %z";
+static DEFAULT_NO_SPACES_KEY_FORMAT: &str = "%Y-%m-%dT%H:%M%z";
